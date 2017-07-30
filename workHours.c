@@ -272,6 +272,10 @@ int* timeWorked(int** inTime, int** outTime, int numDays)
     int* worked = malloc(sizeof(int)*3);
     int* temp = malloc(sizeof(int)*3);
 
+    for(int i=0; i<3; i++)
+        worked[i] = 0;
+
+
     for(int day=0; day <= numDays; day++)
     {
         temp = computeOneDay(day,inTime[day], outTime[day], temp);

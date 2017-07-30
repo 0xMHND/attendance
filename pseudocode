@@ -1,0 +1,71 @@
+Mode:
+    0- normal Shift // in 7:00 out 15:30
+    1- short Shift // in 8:30 out 14:30
+(constant?) _totalWTime = 40:00:00 + 5(00:30:00)  // 40 hr/week + 5 'lunch-break'
+
+
+get data from attendacne sheet
+    week info:
+        week[0] = Week #
+        week[1] = month of week
+        week[2] = first daay of week date
+        week[3] = year
+        weekCnt++
+    day info:
+        C inTime[0] xx:xx:xx outTime[0] xx:xx:xx
+        dayCnt++
+*******************************************************************
+_nowTime = timeinfo 
+
+*******************************************************************
+if cmd argv exist
+    day y = argv[1] 
+    day x = argv[2]
+    remDays = 0
+else
+    day y = (weekCnt*7) - 7 //current week 
+    day x = (dayCnt%7) - 1  //e.g. day4week1 => 5%1 - 1 = 4
+    remDays = 5 - day x
+    
+_minRemWTime = (6:00:00) * remDays // short shift for rem. Days
+_norRemWTime = (8:30:00) * remDays // normal shift for rem. Days
+*******************************************************************
+_workedTime
+calcWorkedTime( day y , day x ) :
+    for( day Y until day X)
+    {
+        if(day X is today)
+            += nowTime - inTime
+        else
+            += outTime - inTime
+    }
+*******************************************************************
+_netWTime // Net week time. (wrokedTime - total Week Time) 
+calcrNetWeekTime (workedTime):
+    _netWTime = workedTime - _totalWTime // "-" means still work to be done
+                                         // "+" means overtime
+    if ( netWTime < (_minRemWTime) )
+        netWTime += _minRemWTime
+
+
+*******************************************************************
+_maxRemDTime // remaining day time w/ 8:30-14:30 next days. (Short shift)
+_norRemDTime // remaining day time w/ 7:00-15:30 next days. (Normal shift)
+calcRemDayTime(_netWTime , day x):
+    _maxRemDTime = _netWTime - _minRemWTime; // CAN't be negative.
+    _norRemDTime = _netWTime - _norRemWTime; // "-" value means I shoud've left already
+    printf(maximum shift:  nowTime + _maxRemDayTime )
+    printf(normal shift: nowTime + _maxRemDayTime )
+
+*******************************************************************
+offThursday(_netWTime, day x):
+    shortShft mode:
+            _rTotal = _netWTime - (14:30 - nowTime)
+            _rTotal -= (remDays-1) * (6:00:00)
+            printf(short shift (in 8:30 out 14:30) ----> 14:30 + _rTotal)
+    norShft mode:
+            _rTotal = _netWTime - (15:30 - nowTime)
+            _rTotal -= (remDays-1) * (8:30:00)
+            printf(normal shift (in 7:00 out 15:30) ----> 15:30 + _rTotal)
+    
+    
