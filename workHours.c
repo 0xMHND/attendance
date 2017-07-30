@@ -337,7 +337,7 @@ void offThursday(int* rem, int* nowTime){
 
     todayRemTime[HR] = 15 - nowTime[HR];
     todayRemTime[MIN] = 30 - nowTime[MIN];
-    if(todayRemTime[MIN] < 0)
+    while(todayRemTime[MIN] < 0)
     {
         todayRemTime[MIN] += 60;
         todayRemTime[HR] -= 1;
@@ -353,6 +353,12 @@ void offThursday(int* rem, int* nowTime){
         buffTime[MIN] += 60;
         buffTime[HR]--;
     }
+    if(buffTime[HR] > 0 && buffTime[MIN] < 0)
+    {
+        buffTime[MIN] += 60;
+        buffTime[HR]--;
+    }
+
 #ifdef DEBUG
     printf("DEBUGGING: extra time ++ %02d:%02d:%02d ++\n", buffTime[HR], buffTime[MIN], buffTime[SEC]);
 #endif
