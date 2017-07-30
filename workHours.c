@@ -1,19 +1,41 @@
-
+//
+//FIXME: currently only 1 year
+//
+//
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 
 
-#define FILENAME "currentWeek"
+#define FILENAME "attendance"//"currentWeek"
 #define LINE_MAX 50
+#define WEEK_MAX 52
+#define WEEK_NUM 1 
+#define ANSI_COLOR_RED "\033[22;31m"
+#define ANSI_COLOR_LIGHTRED "\033[01;31m"
+#define ANSI_COLOR_WHITERED "\033[31;47m"
+#define ANSI_COLOR_YELLOWBLUE "\033[38;5;12;1m\033[48;5;11m"
+#define ANSI_COLOR_WHITEBLUE "\033[34;47m"
+#define ANSI_COLOR_LIGHTCYAN "\033[01;36m"
+#define ANSI_COLOR_RESET "\x1b[0m"
 
-enum time{HR,MIN,SEC, DAY};
+//
+// modes:
+//      0 - Last week   
+//      1 - specefic week 
+//
+
+enum time{HR, MIN, SEC, DAY};
 enum days{Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday};
 
-int* timeWorked(int** inTime, int** outTime, struct tm* timeinfo);
+int* timeWorked(int** inTime, int** outTime, int numDays);
 int* computeOneDay(int day, int* inTime, int* outTime, int* oneDay);
 int* remTime(int* totalTime);
 void offThursday(int* remTime, int* nowTime);
+void backOnSchedule(int* rem, int* nowTime);
+
+void curWeek(int weekCnt, int** inTime, int** outTime, struct tm* timeinfo);
+void oneWeek(int weekCnt, int** inTime, int** outTime, struct tm* timeinfo);
 
 int main(int argc, char** argv)
 {
@@ -29,9 +51,9 @@ int main(int argc, char** argv)
         exit(EXIT_FAILURE);
 
 
-    int** inTime = malloc(sizeof(int*)*7); 
-    int** outTime = malloc(sizeof(int*)*7); 
-    for(int i=0; i<7; i++)
+    int** inTime = malloc(sizeof(int*)*7*WEEK_MAX); 
+    int** outTime = malloc(sizeof(int*)*7*WEEK_MAX); 
+    for(int i=0; i<(7*WEEK_MAX); i++)
     {
         inTime[i] = malloc(sizeof(int)*3);
         outTime[i] = malloc(sizeof(int)*3);
@@ -48,8 +70,8 @@ int main(int argc, char** argv)
     char buf[LINE_MAX];
     int weekCnt = 0;
     int** week; //month, day, year
-    week = malloc(sizeof(int*) * 52); //one year
-    for(int i=0; i<52; i++)
+    week = malloc(sizeof(int*) * WEEK_MAX); //one year
+    for(int i=0; i<WEEK_MAX; i++)
     {
         week[i] = malloc(sizeof(int*) * 4); //one year
         for(int j=0;j<4;j++)
@@ -57,28 +79,77 @@ int main(int argc, char** argv)
             week[i][j]=0;
         }
     }
-    printf("FINISHED initializing week");
     while (fgets(buf, sizeof(buf), fp) != NULL) {
         // process line here
-        //printf("scanned %s\n", buf);
+#ifdef DEBUG
+        printf("scanned %s\n", buf);
+#endif
         if( (buf[0]=='W') && (buf[1]=='E') ) //if first word is WEEK
         {
-            if(week[51][0] == 52) //we've hit 52 weeks.
-                week = realloc(week, sizeof(int*) * 52); //one year
+            if(week[51][0] == WEEK_MAX) //we've hit 52 weeks.
+                week = realloc(week, sizeof(int*) * WEEK_MAX); //one year
             sscanf(buf, "WEEK%d %d-%d-%d", &week[weekCnt][0],&week[weekCnt][1], &week[weekCnt][2], &week[weekCnt][3]);  
+            weekCnt++;
         }
         else{
-            sscanf(buf, "%c %d,%d,%d %d,%d,%d", &day, &inTime[cnt][HR], &inTime[cnt][MIN], &inTime[cnt][SEC], &outTime[cnt][HR], &outTime[cnt][MIN], &outTime[cnt][SEC]);
-            //printf("RESULT %c\nIN - %d:%d:%d %d:%d:%d\n", day, inTime[cnt][HR], inTime[cnt][MIN], inTime[cnt][SEC], outTime[cnt][HR], outTime[cnt][MIN], outTime[cnt][SEC]);
-        cnt++;
+            sscanf(buf, "%c %d:%d:%d %d:%d:%d", &day, &inTime[cnt][HR], &inTime[cnt][MIN], &inTime[cnt][SEC], &outTime[cnt][HR], &outTime[cnt][MIN], &outTime[cnt][SEC]);
+#ifdef DEBUG
+            printf("%c\n\tIN - %d:%d:%d \n\tOUT - %d:%d:%d\n", day, inTime[cnt][HR], inTime[cnt][MIN], inTime[cnt][SEC], outTime[cnt][HR], outTime[cnt][MIN], outTime[cnt][SEC]);
+#endif
+            cnt++;
         }
     }
     fclose(fp);
+//    printf("cnt %d\nweeks %d\n",cnt, weekCnt);
 
     //NOW time
     outTime[cnt-1][HR] = timeinfo->tm_hour;
     outTime[cnt-1][MIN] = timeinfo->tm_min;
     outTime[cnt-1][SEC] = timeinfo->tm_sec;
+
+    //
+    //
+    // FINISHED READING DATA
+    // NOW COMPUTE 
+    //
+    //
+
+    curWeek( weekCnt,  inTime,  outTime, timeinfo);
+    oneWeek( WEEK_NUM,  inTime,  outTime, timeinfo);
+
+    for(int i=0; i<(7*WEEK_MAX); i++)
+    {
+        free(inTime[i]);
+        free(outTime[i]);
+    }
+    for(int i=0; i<WEEK_MAX; i++) //TODO: extend more than a year
+    {
+        free(week[i]);
+    }
+    return 0 ;
+}
+
+void curWeek(int weekCnt, int** inTime, int** outTime, struct tm* timeinfo)
+{
+    printf("\nCURRENT : @@ " ANSI_COLOR_LIGHTCYAN"WEEK %d" ANSI_COLOR_RESET " @@\n",weekCnt);
+    int weekStart = (weekCnt*7) - 7;
+    int** curInTime = malloc(sizeof(int*)*7);
+    int** curOutTime = malloc(sizeof(int*)*7);
+    for(int i=0; i<7; i++)
+    {
+        curInTime[i] = malloc(sizeof(int)*3);
+        curOutTime[i] = malloc(sizeof(int)*3);
+        for(int j=0; j<3; j++)
+        {
+            curInTime[i][j] = inTime[weekStart+i][j];
+            curOutTime[i][j] = outTime[weekStart+i][j];
+        }
+    }
+    int* t_worked;
+    t_worked = timeWorked(curInTime, curOutTime, timeinfo->tm_wday);
+
+    int* remainingTime;
+    remainingTime = remTime(t_worked);
 
     int nowTime[4] = {0};
     nowTime[HR] = timeinfo->tm_hour;
@@ -86,26 +157,55 @@ int main(int argc, char** argv)
     nowTime[SEC] = timeinfo->tm_sec;
     nowTime[DAY] = timeinfo->tm_wday; // days since sunday(0) -> 6
 
-    int* t_worked;
-    t_worked = timeWorked(inTime, outTime, timeinfo);
-
-    int* remainingTime;
-    remainingTime = remTime(t_worked);
-
-    offThursday(remainingTime, nowTime);
+    backOnSchedule( remainingTime, nowTime);
 
     free(t_worked);
     free(remainingTime);
     for(int i=0; i<7; i++)
     {
-        free(inTime[i]);
-        free(outTime[i]);
+        free(curInTime[i]);
+        free(curOutTime[i]);
     }
-    for(int i=0; i<52; i++) //TODO: extend.
+}
+void oneWeek(int weekCnt, int** inTime, int** outTime, struct tm* timeinfo)
+{
+    printf("\n\t@@ WEEK %d @@\n",weekCnt);
+    int weekStart = (weekCnt*7) - 7;
+    int** curInTime = malloc(sizeof(int*)*7);
+    int** curOutTime = malloc(sizeof(int*)*7);
+    for(int i=0; i<7; i++)
     {
-        free(week[i]);
+        curInTime[i] = malloc(sizeof(int)*3);
+        curOutTime[i] = malloc(sizeof(int)*3);
+        for(int j=0; j<3; j++)
+        {
+            curInTime[i][j] = inTime[weekStart+i][j];
+            curOutTime[i][j] = outTime[weekStart+i][j];
+        }
     }
-    return 0 ;
+    int* t_worked;
+    t_worked = timeWorked(curInTime, curOutTime, 6);
+
+    int* remainingTime;
+    remainingTime = remTime(t_worked);
+
+    int nowTime[4] = {0};
+    nowTime[HR] = timeinfo->tm_hour;
+    nowTime[MIN] = timeinfo->tm_min;
+    nowTime[SEC] = timeinfo->tm_sec;
+    nowTime[DAY] = timeinfo->tm_wday; // days since sunday(0) -> 6
+
+    printf("worked %02d:%02d:%02d  out of 42:30:00\n", t_worked[HR], t_worked[MIN], t_worked[SEC]);
+    printf("Rem.Time %02d:%02d:%02d\n", remainingTime[HR], remainingTime[MIN], remainingTime[SEC]);
+//    offThursday(remainingTime, nowTime);
+
+    free(t_worked);
+    free(remainingTime);
+    for(int i=0; i<7; i++)
+    {
+        free(curInTime[i]);
+        free(curOutTime[i]);
+    }
 }
 
 /*
@@ -120,15 +220,18 @@ int main(int argc, char** argv)
 */
 int* computeOneDay(int day, int* inTime, int* outTime, int* oneDay){
 
+    //outTime - inTime - 30min(lunch)
     oneDay[SEC] = outTime[SEC] - inTime[SEC];
-    oneDay[MIN] = outTime[MIN] - inTime[MIN];
+    oneDay[MIN] = outTime[MIN] - inTime[MIN] - 30;
+    if(day > 4 )
+        oneDay[MIN]+=30;
     oneDay[HR] = outTime[HR] - inTime[HR];
-    if(oneDay[SEC] < 0)
+    while(oneDay[SEC] < 0)
     {
         oneDay[SEC] += 60; 
         oneDay[MIN]--;
     }
-    if(oneDay[MIN] < 0)
+    while(oneDay[MIN] < 0)
     {
         oneDay[MIN] += 60; 
         oneDay[HR]--;
@@ -139,22 +242,22 @@ int* computeOneDay(int day, int* inTime, int* outTime, int* oneDay){
             printf("Sunday || in(%d:%d:%d) out(%d:%d:%d) =  %d:%d:%d\n", inTime[HR], inTime[MIN], inTime[SEC], outTime[HR], outTime[MIN], outTime[SEC], oneDay[HR], oneDay[MIN], oneDay[SEC]);
             break;
         case 1:
-            printf("Monday  %d:%d:%d\n", oneDay[HR], oneDay[MIN], oneDay[SEC]);
+            printf("Monday || in(%d:%d:%d) out(%d:%d:%d) =  %d:%d:%d\n", inTime[HR], inTime[MIN], inTime[SEC], outTime[HR], outTime[MIN], outTime[SEC], oneDay[HR], oneDay[MIN], oneDay[SEC]);
             break;
         case 2:
-            printf("Tuesday  %d:%d:%d\n", oneDay[HR], oneDay[MIN], oneDay[SEC]);
+            printf("Tuesday || in(%d:%d:%d) out(%d:%d:%d) =  %d:%d:%d\n", inTime[HR], inTime[MIN], inTime[SEC], outTime[HR], outTime[MIN], outTime[SEC], oneDay[HR], oneDay[MIN], oneDay[SEC]);
             break;
         case 3:
-            printf("Wednesday  %d:%d:%d\n", oneDay[HR], oneDay[MIN], oneDay[SEC]);
+            printf("Wednesday || in(%d:%d:%d) out(%d:%d:%d) =  %d:%d:%d\n", inTime[HR], inTime[MIN], inTime[SEC], outTime[HR], outTime[MIN], outTime[SEC], oneDay[HR], oneDay[MIN], oneDay[SEC]);
             break;
         case 4:
-            printf("Thursday  %d:%d:%d\n", oneDay[HR], oneDay[MIN], oneDay[SEC]);
+            printf("Thursday || in(%d:%d:%d) out(%d:%d:%d) =  %d:%d:%d\n", inTime[HR], inTime[MIN], inTime[SEC], outTime[HR], outTime[MIN], outTime[SEC], oneDay[HR], oneDay[MIN], oneDay[SEC]);
             break;
         case 5:
-            printf("Friday  %d:%d:%d\n", oneDay[HR], oneDay[MIN], oneDay[SEC]);
+            printf("Friday || in(%d:%d:%d) out(%d:%d:%d) =  %d:%d:%d\n", inTime[HR], inTime[MIN], inTime[SEC], outTime[HR], outTime[MIN], outTime[SEC], oneDay[HR], oneDay[MIN], oneDay[SEC]);
             break;
         case 6:
-            printf("Saturday  %d:%d:%d\n", oneDay[HR], oneDay[MIN], oneDay[SEC]);
+            printf("Saturday || in(%d:%d:%d) out(%d:%d:%d) =  %d:%d:%d\n", inTime[HR], inTime[MIN], inTime[SEC], outTime[HR], outTime[MIN], outTime[SEC], oneDay[HR], oneDay[MIN], oneDay[SEC]);
             break;
         default:
             printf("error: reading day\n");
@@ -164,12 +267,12 @@ int* computeOneDay(int day, int* inTime, int* outTime, int* oneDay){
     return oneDay;
 }       
 
-int* timeWorked(int** inTime, int** outTime, struct tm* timeinfo)
+int* timeWorked(int** inTime, int** outTime, int numDays)
 {
     int* worked = malloc(sizeof(int)*3);
     int* temp = malloc(sizeof(int)*3);
 
-    for(int day=0; day <= timeinfo->tm_wday; day++)
+    for(int day=0; day <= numDays; day++)
     {
         temp = computeOneDay(day,inTime[day], outTime[day], temp);
         worked[HR]+=temp[HR];
@@ -185,9 +288,14 @@ int* timeWorked(int** inTime, int** outTime, struct tm* timeinfo)
             worked[MIN] -= 60;
             worked[HR]++;
         }
-        printf("WORKED %02d:%02d:%02d\n", worked[HR], worked[MIN], worked[SEC]);
+#ifdef debug
+        printf("worked %02d:%02d:%02d\n", worked[HR], worked[MIN], worked[SEC]);
+#endif
     }
     free(temp);
+#ifdef debug
+    printf("TOTAL WORKED %02d:%02d:%02d\n", worked[HR], worked[MIN], worked[SEC]);
+#endif
     return worked;
 }
 
@@ -263,9 +371,45 @@ void offThursday(int* rem, int* nowTime){
     }
 
     leaveTime[SEC] = 0; 
-    printf("LEAVE AT Thursday *** %02d:%02d:%02d ***\n", leaveTime[HR], leaveTime[MIN], leaveTime[MIN]);
-}
 
+    printf("LEAVE AT Thursday ***" ANSI_COLOR_LIGHTRED" %02d:%02d:%02d "ANSI_COLOR_RESET"***\n", leaveTime[HR], leaveTime[MIN], leaveTime[MIN]);
+}
+void backOnSchedule(int* rem, int* nowTime)
+{
+    // projecting 8HRs per remaining days ex/today
+    // Time to leave is 15:30 + remaining - 8:30*remDays
+    
+    int remDays = 4 - nowTime[DAY]; //remaining days in the week ex/today
+    int leaveTime[3] = {0};
+
+    leaveTime[HR] = rem[HR] - (8*remDays);
+    leaveTime[MIN] = rem[MIN] - (30*remDays);
+    while(leaveTime[MIN]<(-59))
+    {
+        leaveTime[MIN] += 60;
+        leaveTime[HR]--;
+    }
+
+    leaveTime[HR] += 15;
+    leaveTime[MIN] += 30;
+    while(leaveTime[MIN] < 0)
+    {
+        leaveTime[MIN] += 60;
+        leaveTime[HR]--;
+    }
+    while(leaveTime[MIN] > 59)
+    {
+        leaveTime[MIN] -= 60;
+        leaveTime[HR]++;
+    }
+
+    leaveTime[SEC] = 0; 
+
+    printf(ANSI_COLOR_YELLOWBLUE"Preferred"ANSI_COLOR_RESET" leave today at ***" ANSI_COLOR_WHITEBLUE" %02d:%02d:%02d "ANSI_COLOR_RESET"***\n", leaveTime[HR], leaveTime[MIN], leaveTime[MIN]);
+    printf("else\n");
+    offThursday(rem, nowTime);
+
+}
 
 
 //return remaining hours after now.
