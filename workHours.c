@@ -1,9 +1,11 @@
 //
 //FIXME: currently only 1 year
 //
+//FIXME: search for 'malloc' and then free it
 //
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include "ansiiColor.h"
 
@@ -22,23 +24,71 @@ const int _totalWTime[3] = {42,30,0}; // 40 Hr/week + 5(00:30:00)'lunch break'
 //      1 - specefic week 
 //
 
-void getArgv(int argc, char** argv, int* dayY, int* dayX)
+enum time{HR, MIN, SEC, DAY};
+enum days{Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday};
+
+int* timeWorked(int** inTime, int** outTime, int numDays);
+int* computeOneDay(int day, int* inTime, int* outTime, int* oneDay);
+int* remTime(int* totalTime);
+void offThursday(int* remTime, int* nowTime);
+void backOnSchedule(int* rem, int* nowTime);
+
+void curWeek(int weekCnt, int** inTime, int** outTime, struct tm* timeinfo);
+void oneWeek(int weekCnt, int** inTime, int** outTime, struct tm* timeinfo);
+
+// 4 cases:
+//      Curr. Week:      no arg.
+//      week Z:          1 arg.
+//      from X to Y:     >2 arg. argv[1] != 'd'
+//      from X to Today: = 3 arg. argv[1] =='d'
+void getArgv(int argc, char** argv, int* dayX, int* dayY, int dayCnt)
 {
-    if(argc > 1)
+    int numWeek = 1;
+#ifdef DEBUG
+    for(int i=0; i<argc; i++)
+        printf("argv[%d] : %s\n", i, argv[i]);
+#endif
+    switch(argc)
     {
-        for(int i=0; i<argc; i++)
-            printf("argv[%d] : %s\n", i, argv[i]);
-        sscanf(argv[1],"%d", dayY);
-        sscanf(argv[2],"%d", dayX);
-        printf("computing the period from Day %d until %d\n", *dayY, *dayX);
-    }
-    else
-    {
-        printf("Current Week(default), for a certian period enter ./prog Y to X\n");
+        case 1: //NO Arguments
+            *dayX = dayCnt - (dayCnt%7);    //Week's Start
+            *dayY = dayCnt-1;               //TODAY
+            printf("\nINIT : default (current week %d -> %d), for a certian period enter ./prog X to Y\n", *dayX, *dayY);
+            break;
+        case 2: // one argument
+            sscanf(argv[1],"%d", &numWeek);
+            *dayX = 7 - (numWeek*7);    //Week's Start
+            *dayY = *dayX+6;            //Week's End
+
+            printf("\nINIT : WEEK %d - from day %d until %d\n", numWeek, *dayX, *dayY);
+            break;
+        case 3:
+            if(!strcmp(argv[1],"d")){
+                sscanf(argv[2],"%d", dayX);
+                *dayY = dayCnt - 1;
+                printf("\nINIT : computing the period from Day %d until TODAY(%d)\n", *dayX, *dayY);
+                break;
+            }
+        default: // argc > 2
+            sscanf(argv[1],"%d", dayX);
+            sscanf(argv[2],"%d", dayY);
+            printf("\n init : computing the period from Day %d until %d\n", *dayX, *dayY);
+            break;
     }
 }
-void readFile(int** inTime, int** outTime, int** week, int* weekCnt, int* dayCnt)
+
+//TODO:
+void _print_readFile(int* inTime, int* outTime, int* week, int weekCnt, int dayCnt){
+
+    for(int i=0; i<dayCnt; i++)
+    {
+    }
+}
+
+void readFile(int** inTime, int** outTime, int** week, int* out_weekCnt, int* out_dayCnt)
 {
+    int weekCnt = *out_weekCnt;
+    int dayCnt = *out_dayCnt;
 
     FILE* fp = fopen(FILENAME, "r");
     if (fp == NULL)
@@ -54,57 +104,98 @@ void readFile(int** inTime, int** outTime, int** week, int* weekCnt, int* dayCnt
             week[i][j]=0;
         }
     }
+
     while (fgets(buf, sizeof(buf), fp) != NULL) {
-        // process line here
 #ifdef DEBUG
-        printf("scanned %s\n", buf);
+//        printf("scanned %s\n", buf);
 #endif
         if( (buf[0]=='W') && (buf[1]=='E') ) //if first word is WEEK
         {
             if(week[51][0] == WEEK_MAX) //we've hit 52 weeks.
                 week = realloc(week, sizeof(int*) * WEEK_MAX); //one year
-            sscanf(buf, "WEEK%d %d-%d-%d", &week[weekCnt][0],&week[weekCnt][1], &week[weekCnt][2], &week[weekCnt][3]);  
+            sscanf(buf, "WEEK%d %d-%d-%d", &week[weekCnt][0], &week[weekCnt][1], 
+                                           &week[weekCnt][2], &week[weekCnt][3]);  
             weekCnt++;
         }
         else{
-            sscanf(buf, "%c %d:%d:%d %d:%d:%d", &day, &inTime[cnt][HR], &inTime[cnt][MIN], &inTime[cnt][SEC], &outTime[cnt][HR], &outTime[cnt][MIN], &outTime[cnt][SEC]);
+            sscanf(buf, "%c %d:%d:%d %d:%d:%d", &day, &inTime[dayCnt][HR], &inTime[dayCnt][MIN], 
+                                                      &inTime[dayCnt][SEC], &outTime[dayCnt][HR], 
+                                                      &outTime[dayCnt][MIN], &outTime[dayCnt][SEC]);
 #ifdef DEBUG
-            printf("%c\n\tIN - %d:%d:%d \n\tOUT - %d:%d:%d\n", day, inTime[cnt][HR], inTime[cnt][MIN], inTime[cnt][SEC], outTime[cnt][HR], outTime[cnt][MIN], outTime[cnt][SEC]);
+            printf("%c IN- %d:%d:%d OUT- %d:%d:%d\n", day, inTime[dayCnt][HR], 
+                                                           inTime[dayCnt][MIN],
+                                                           inTime[dayCnt][SEC], 
+                                                           outTime[dayCnt][HR],
+                                                           outTime[dayCnt][MIN], 
+                                                           outTime[dayCnt][SEC]);
 #endif
-            cnt++;
+            dayCnt++;
         }
     }
     fclose(fp);
 
+    *out_weekCnt = weekCnt;
+    *out_dayCnt = dayCnt;
 }
-enum time{HR, MIN, SEC, DAY};
-enum days{Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday};
 
-int* timeWorked(int** inTime, int** outTime, int numDays);
-int* computeOneDay(int day, int* inTime, int* outTime, int* oneDay);
-int* remTime(int* totalTime);
-void offThursday(int* remTime, int* nowTime);
-void backOnSchedule(int* rem, int* nowTime);
+void calcWorkedTime(int* _workedTime, int dayX, int dayY, int dayCnt, int** inTime, int** outTime, int* nowTime)
+{
+    int workedTime[3]   = {0};
+    workedTime[HR]      = _workedTime[HR];
+    workedTime[MIN]     = _workedTime[MIN];
+    workedTime[SEC]     = _workedTime[SEC];
+    int today = dayCnt-1;
 
-void curWeek(int weekCnt, int** inTime, int** outTime, struct tm* timeinfo);
-void oneWeek(int weekCnt, int** inTime, int** outTime, struct tm* timeinfo);
+    for(int i=dayX; i<=dayY; i++)
+    {
+        if( (i==dayY) && (dayY==today) ) //if dayY is Today
+        {
+            workedTime[SEC] += nowTime[SEC] - inTime[i][SEC]; // -59 to 59
+            workedTime[MIN] += nowTime[MIN] - inTime[i][MIN]; // -59 to 59
+            workedTime[HR] += nowTime[HR] - inTime[i][HR];
+        }
+        else
+        {
+            workedTime[SEC] += outTime[i][SEC] - inTime[i][SEC]; // -59 to 59
+            workedTime[MIN] += outTime[i][MIN] - inTime[i][MIN]; // -59 to 59
+            workedTime[HR] += outTime[i][HR] - inTime[i][HR];
+        }
+        //check overFlow
+        if(workedTime[SEC] > 59)
+        {
+            workedTime[SEC] -= 60;
+            workedTime[MIN]++;
+        }
+        else if(workedTime[SEC] < 0)
+        {
+            workedTime[SEC] += 60;
+            workedTime[MIN]--;
+        }
+        if(workedTime[MIN] > 59)
+        {
+            workedTime[MIN] -= 60;
+            workedTime[HR]++;
+        }
+        else if(workedTime[MIN] < 0)
+        {
+            workedTime[MIN] += 60;
+            workedTime[HR]--;
+        }
+#ifdef DEBUG
+    printf("DEBUG: day[%d] worked %02d:%02d:%02d\n", i, workedTime[HR], workedTime[MIN], workedTime[SEC]);
+#endif
+       } 
+
+    _workedTime[HR]      = workedTime[HR];
+    _workedTime[MIN]     = workedTime[MIN];
+    _workedTime[SEC]     = workedTime[SEC];
+}
 
 int main(int argc, char** argv)
 {
-    int * dayY = malloc(sizeof(int));
-    int * dayX = malloc(sizeof(int));
-    getArgv(argc, argv, dayY, dayX);
-    
-
-    time_t rawtime;
-    time( &rawtime );
-    struct tm * timeinfo;
-    timeinfo = localtime ( &rawtime );
-    
-    printf ("Today is %s", asctime(timeinfo));
-    
-    int * weekCnt = malloc(sizeof(int));
-    int * dayCnt  = malloc(sizeof(int));
+// *******XXX READ_FILe XXX******* //
+    int weekCnt = 0;
+    int dayCnt  = 0;
     int** week; //month, day, year
     week = malloc(sizeof(int*) * WEEK_MAX); //one year
 
@@ -121,13 +212,30 @@ int main(int argc, char** argv)
         }
     }
 
-    
-//    printf("cnt %d\nweeks %d\n",cnt, weekCnt);
+    readFile( inTime, outTime, week, &weekCnt, &dayCnt);
+#ifdef DEBUG
+    printf("weekCnt - %d\tdayCnt - %d\n", weekCnt, dayCnt);
+#endif
 
-    //NOW time
-    outTime[cnt-1][HR] = timeinfo->tm_hour;
-    outTime[cnt-1][MIN] = timeinfo->tm_min;
-    outTime[cnt-1][SEC] = timeinfo->tm_sec;
+// *******XXX ARGV XXX******* //
+    int dayY = 0;
+    int dayX = 0;
+    getArgv(argc, argv, &dayX, &dayY, dayCnt);
+
+// *******XXX TIME XXX******* //
+    time_t rawtime;
+    time( &rawtime );
+    struct tm * timeinfo;
+    timeinfo = localtime ( &rawtime );
+
+    int nowTime[4] = {0};
+    nowTime[HR] = timeinfo->tm_hour;
+    nowTime[MIN] = timeinfo->tm_min;
+    nowTime[SEC] = timeinfo->tm_sec;
+    nowTime[DAY] = timeinfo->tm_wday; // days since sunday(0) -> 6
+    
+    printf ("Today is %s", asctime(timeinfo));
+    
 
     //
     //
@@ -135,7 +243,12 @@ int main(int argc, char** argv)
     // NOW COMPUTE 
     //
     //
-
+    int _workedTime[3] = {0};
+    calcWorkedTime( _workedTime, dayX, dayY, dayCnt, inTime, outTime, nowTime);
+#ifdef DEBUG
+    printf("DEBUG: tot_worked %02d:%02d:%02d\n", _workedTime[HR], _workedTime[MIN], _workedTime[SEC]);
+#endif
+/*
     curWeek( weekCnt,  inTime,  outTime, timeinfo);
     oneWeek( WEEK_NUM,  inTime,  outTime, timeinfo);
 
@@ -148,6 +261,9 @@ int main(int argc, char** argv)
     {
         free(week[i]);
     }
+    free(week);
+*/
+    printf("\n");
     return 0 ;
 }
 
