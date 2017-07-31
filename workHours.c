@@ -5,72 +5,47 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include "ansiiColor.h"
 
 
-#define FILENAME "attendance"//"currentWeek"
+#define FILENAME "attendance"
 #define LINE_MAX 50
 #define WEEK_MAX 52
 #define WEEK_NUM 1 
-#define ANSI_COLOR_RED "\033[22;31m"
-#define ANSI_COLOR_LIGHTRED "\033[01;31m"
-#define ANSI_COLOR_WHITERED "\033[31;47m"
-#define ANSI_COLOR_YELLOWBLUE "\033[38;5;12;1m\033[48;5;11m"
-#define ANSI_COLOR_WHITEBLUE "\033[34;47m"
-#define ANSI_COLOR_LIGHTCYAN "\033[01;36m"
-#define ANSI_COLOR_RESET "\x1b[0m"
 
+const int _totalWTime[3] = {42,30,0}; // 40 Hr/week + 5(00:30:00)'lunch break'
+#define NORMAL_SH   0 //in 7:00 out 15:30
+#define SHORT_SH    1 //in 8:30 out 14:30
 //
 // modes:
 //      0 - Last week   
 //      1 - specefic week 
 //
 
-enum time{HR, MIN, SEC, DAY};
-enum days{Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday};
-
-int* timeWorked(int** inTime, int** outTime, int numDays);
-int* computeOneDay(int day, int* inTime, int* outTime, int* oneDay);
-int* remTime(int* totalTime);
-void offThursday(int* remTime, int* nowTime);
-void backOnSchedule(int* rem, int* nowTime);
-
-void curWeek(int weekCnt, int** inTime, int** outTime, struct tm* timeinfo);
-void oneWeek(int weekCnt, int** inTime, int** outTime, struct tm* timeinfo);
-
-int main(int argc, char** argv)
+void getArgv(int argc, char** argv, int* dayY, int* dayX)
 {
-    time_t rawtime;
-    time( &rawtime );
-    struct tm * timeinfo;
-    timeinfo = localtime ( &rawtime );
-    
-    printf ("Today is %s", asctime(timeinfo));
-    
+    if(argc > 1)
+    {
+        for(int i=0; i<argc; i++)
+            printf("argv[%d] : %s\n", i, argv[i]);
+        sscanf(argv[1],"%d", dayY);
+        sscanf(argv[2],"%d", dayX);
+        printf("computing the period from Day %d until %d\n", *dayY, *dayX);
+    }
+    else
+    {
+        printf("Current Week(default), for a certian period enter ./prog Y to X\n");
+    }
+}
+void readFile(int** inTime, int** outTime, int** week, int* weekCnt, int* dayCnt)
+{
+
     FILE* fp = fopen(FILENAME, "r");
     if (fp == NULL)
         exit(EXIT_FAILURE);
 
-
-    int** inTime = malloc(sizeof(int*)*7*WEEK_MAX); 
-    int** outTime = malloc(sizeof(int*)*7*WEEK_MAX); 
-    for(int i=0; i<(7*WEEK_MAX); i++)
-    {
-        inTime[i] = malloc(sizeof(int)*3);
-        outTime[i] = malloc(sizeof(int)*3);
-        for(int j=0; j<3; j++)
-        {
-            inTime[i][j] = 0;
-            outTime[i][j] = 0;
-        }
-    }
-
-    
-    int cnt = 0;
     char day = 'X';
     char buf[LINE_MAX];
-    int weekCnt = 0;
-    int** week; //month, day, year
-    week = malloc(sizeof(int*) * WEEK_MAX); //one year
     for(int i=0; i<WEEK_MAX; i++)
     {
         week[i] = malloc(sizeof(int*) * 4); //one year
@@ -100,6 +75,53 @@ int main(int argc, char** argv)
         }
     }
     fclose(fp);
+
+}
+enum time{HR, MIN, SEC, DAY};
+enum days{Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday};
+
+int* timeWorked(int** inTime, int** outTime, int numDays);
+int* computeOneDay(int day, int* inTime, int* outTime, int* oneDay);
+int* remTime(int* totalTime);
+void offThursday(int* remTime, int* nowTime);
+void backOnSchedule(int* rem, int* nowTime);
+
+void curWeek(int weekCnt, int** inTime, int** outTime, struct tm* timeinfo);
+void oneWeek(int weekCnt, int** inTime, int** outTime, struct tm* timeinfo);
+
+int main(int argc, char** argv)
+{
+    int * dayY = malloc(sizeof(int));
+    int * dayX = malloc(sizeof(int));
+    getArgv(argc, argv, dayY, dayX);
+    
+
+    time_t rawtime;
+    time( &rawtime );
+    struct tm * timeinfo;
+    timeinfo = localtime ( &rawtime );
+    
+    printf ("Today is %s", asctime(timeinfo));
+    
+    int * weekCnt = malloc(sizeof(int));
+    int * dayCnt  = malloc(sizeof(int));
+    int** week; //month, day, year
+    week = malloc(sizeof(int*) * WEEK_MAX); //one year
+
+    int** inTime = malloc(sizeof(int*)*7*WEEK_MAX); 
+    int** outTime = malloc(sizeof(int*)*7*WEEK_MAX); 
+    for(int i=0; i<(7*WEEK_MAX); i++)
+    {
+        inTime[i] = malloc(sizeof(int)*3);
+        outTime[i] = malloc(sizeof(int)*3);
+        for(int j=0; j<3; j++)
+        {
+            inTime[i][j] = 0;
+            outTime[i][j] = 0;
+        }
+    }
+
+    
 //    printf("cnt %d\nweeks %d\n",cnt, weekCnt);
 
     //NOW time
