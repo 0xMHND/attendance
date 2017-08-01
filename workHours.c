@@ -11,6 +11,9 @@
 
 
 #define FILENAME "attendance"
+#ifdef DEBUG
+#define FILENAME "randomWeekG/randomWeek"
+#endif
 #define LINE_MAX 50
 #define WEEK_MAX 52
 #define WEEK_NUM 1 
@@ -41,7 +44,7 @@ void oneWeek(int weekCnt, int** inTime, int** outTime, struct tm* timeinfo);
 //      week Z:          1 arg.
 //      from X to Y:     >2 arg. argv[1] != 'd'
 //      from X to Today: = 3 arg. argv[1] =='d'
-void getArgv(int argc, char** argv, int* dayX, int* dayY, int dayCnt)
+void getArgv(int argc, char** argv, int* dayX, int* dayY, int dayCnt, int weekCnt)
 {
     int numWeek = 1;
 #ifdef DEBUG
@@ -57,7 +60,12 @@ void getArgv(int argc, char** argv, int* dayX, int* dayY, int dayCnt)
             break;
         case 2: // one argument
             sscanf(argv[1],"%d", &numWeek);
-            *dayX = 7 - (numWeek*7);    //Week's Start
+            if(numWeek > weekCnt)
+            {
+                printf("ERROR: week number > available\n");
+                exit(0);
+            }
+            *dayX = (numWeek*7) - 7;    //Week's Start
             *dayY = *dayX+6;            //Week's End
 
             printf("\nINIT : WEEK %d - from day %d until %d\n", numWeek, *dayX, *dayY);
@@ -106,9 +114,6 @@ void readFile(int** inTime, int** outTime, int** week, int* out_weekCnt, int* ou
     }
 
     while (fgets(buf, sizeof(buf), fp) != NULL) {
-#ifdef DEBUG
-//        printf("scanned %s\n", buf);
-#endif
         if( (buf[0]=='W') && (buf[1]=='E') ) //if first word is WEEK
         {
             if(week[51][0] == WEEK_MAX) //we've hit 52 weeks.
@@ -121,7 +126,7 @@ void readFile(int** inTime, int** outTime, int** week, int* out_weekCnt, int* ou
             sscanf(buf, "%c %d:%d:%d %d:%d:%d", &day, &inTime[dayCnt][HR], &inTime[dayCnt][MIN], 
                                                       &inTime[dayCnt][SEC], &outTime[dayCnt][HR], 
                                                       &outTime[dayCnt][MIN], &outTime[dayCnt][SEC]);
-#ifdef DEBUG
+#ifdef DEBUG1
             printf("%c IN- %d:%d:%d OUT- %d:%d:%d\n", day, inTime[dayCnt][HR], 
                                                            inTime[dayCnt][MIN],
                                                            inTime[dayCnt][SEC], 
@@ -170,6 +175,13 @@ void calcWorkedTime(int* _workedTime, int dayX, int dayY, int dayCnt, int** inTi
     int today = dayCnt-1;
     int oneDay[3] = {0};
 
+    for(int i=dayX; i<=dayY; i++)
+        printf("%d IN- %d:%d:%d OUT- %d:%d:%d\n", i, inTime[i][HR], 
+                                                           inTime[i][MIN],
+                                                           inTime[i][SEC], 
+                                                           outTime[i][HR],
+                                                           outTime[i][MIN], 
+                                                           outTime[i][SEC]);
     for(int i=dayX; i<=dayY; i++)
     {
         if( (i==dayY) && (dayY==today) ) //if dayY is Today
@@ -253,6 +265,46 @@ void calcNetWeekTime(int* _workedTime, int* _netWeekTime, int* totalWeekTime, in
     _netWeekTime[SEC] = N[SEC];
 }
 
+void calcRemDayTime(int* netWTime, int dayY, int* nowTime)
+{
+    int _maxRemDTime[3] = {0};  // remaining day time w/ 8:30-14:30 next days. (Short shift)
+    int _norRemDTime[3] = {0};  // remaining day time w/ 7:00-15:30 next days. (Normal shift)
+    int _minRemWeekTime[3] = {0};
+    int _norRemWeekTime[3] = {0};
+    int _remDays = 6 - (dayY%7);
+    _minRemWeekTime[HR] = (_remDays - 2) * 6;
+    _norRemWeekTime[HR] = (_remDays - 2) * 8;
+    _norRemWeekTime[MIN] = (_remDays - 2) * 30;
+    while(_norRemWeekTime[MIN] > 59)
+    {
+        _norRemWeekTime[MIN] -= 60;
+        _norRemWeekTime[HR]++;
+    }
+
+    _maxRemDTime[SEC] = netWTime[SEC] - _minRemWeekTime[SEC]; // >=0
+    _maxRemDTime[MIN] = netWTime[MIN] - _minRemWeekTime[MIN]; // >=0
+    _maxRemDTime[HR] = netWTime[HR] - _minRemWeekTime[HR];    // >=0
+    checkOverflow(_maxRemDTime);
+    _norRemDTime[SEC] = netWTime[SEC] - _norRemWeekTime[SEC]; // >=0
+    _norRemDTime[MIN] = netWTime[MIN] - _norRemWeekTime[MIN]; // >=0
+    _norRemDTime[HR] = netWTime[HR] - _norRemWeekTime[HR];    // >=0
+    checkOverflow(_norRemDTime);
+    
+    int _leaveTime[3] = {3};
+
+    printf("Maximum shift : %02d:%02d:%02d", _maxRemDTime[HR], _maxRemDTime[MIN], _maxRemDTime[SEC]);
+    _leaveTime[SEC] = nowTime[SEC] + _maxRemDTime[SEC]; // >=0
+    _leaveTime[MIN] = nowTime[MIN] + _maxRemDTime[MIN]; // >=0
+    _leaveTime[HR] = nowTime[HR] + _maxRemDTime[HR];    // >=0
+    checkOverflow(_leaveTime);
+    printf(" @ %02d:%02d:%02d\n", _leaveTime[HR], _leaveTime[MIN], _leaveTime[SEC]);
+    printf("[NORMAL] shift : %02d:%02d:%02d", _norRemDTime[HR], _norRemDTime[MIN], _norRemDTime[SEC]);
+    _leaveTime[SEC] = nowTime[SEC] + _norRemDTime[SEC]; // >=0
+    _leaveTime[MIN] = nowTime[MIN] + _norRemDTime[MIN]; // >=0
+    _leaveTime[HR] = nowTime[HR] + _norRemDTime[HR];    // >=0
+    printf(" @ %02d:%02d:%02d\n", _leaveTime[HR], _leaveTime[MIN], _leaveTime[SEC]);
+
+}
 int main(int argc, char** argv)
 {
 // *******XXX READ_FILe XXX******* //
@@ -282,7 +334,7 @@ int main(int argc, char** argv)
 // *******XXX ARGV XXX******* //
     int dayY = 0;
     int dayX = 0;
-    getArgv(argc, argv, &dayX, &dayY, dayCnt);
+    getArgv(argc, argv, &dayX, &dayY, dayCnt, weekCnt);
 
 // *******XXX TIME XXX******* //
     time_t rawtime;
@@ -300,10 +352,8 @@ int main(int argc, char** argv)
     
 
     //
-    //
     // FINISHED READING DATA
     // NOW COMPUTE 
-    //
     //
     int _workedTime[3] = {0};
     calcWorkedTime( _workedTime, dayX, dayY, dayCnt, inTime, outTime, nowTime);
@@ -313,9 +363,13 @@ int main(int argc, char** argv)
 
     int _netWeekTime[3] = {0};
     calcNetWeekTime(_workedTime, _netWeekTime, _totalWTime, dayY);
+    printf("\n");
+    calcRemDayTime(_netWeekTime, dayY, nowTime);
 /*
     curWeek( weekCnt,  inTime,  outTime, timeinfo);
     oneWeek( WEEK_NUM,  inTime,  outTime, timeinfo);
+
+*/
 
     for(int i=0; i<(7*WEEK_MAX); i++)
     {
@@ -327,8 +381,6 @@ int main(int argc, char** argv)
         free(week[i]);
     }
     free(week);
-*/
-    printf("\n");
     return 0 ;
 }
 

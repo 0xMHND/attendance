@@ -37,12 +37,12 @@ void formatStr( char* str, int cnt)
        inTime[MIN] = rand()%20;
        outTime[HR] = rand()%24;
     }
+    outTime[MIN] = rand()%60;
     while( (outTime[HR]==inTime[HR]) && (outTime[MIN]<=inTime[MIN]) )
     {
-       inTime[HR] = rand()%40;
+       inTime[MIN] = rand()%40;
        outTime[MIN] = rand()%60;
     }
-    outTime[MIN] = rand()%60;
     outTime[SEC] = rand()%60;
 
     switch(cnt)
