@@ -138,6 +138,29 @@ void readFile(int** inTime, int** outTime, int** week, int* out_weekCnt, int* ou
     *out_dayCnt = dayCnt;
 }
 
+void checkOverflow(int *T){
+        if(T[SEC] > 59)
+        {
+            T[SEC] -= 60;
+            T[MIN]++;
+        }
+        else if(T[SEC] < 0)
+        {
+            T[SEC] += 60;
+            T[MIN]--;
+        }
+        if(T[MIN] > 59)
+        {
+            T[MIN] -= 60;
+            T[HR]++;
+        }
+        else if(T[MIN] < 0)
+        {
+            T[MIN] += 60;
+            T[HR]--;
+        }
+}
+
 void calcWorkedTime(int* _workedTime, int dayX, int dayY, int dayCnt, int** inTime, int** outTime, int* nowTime)
 {
     int workedTime[3]   = {0};
@@ -145,44 +168,33 @@ void calcWorkedTime(int* _workedTime, int dayX, int dayY, int dayCnt, int** inTi
     workedTime[MIN]     = _workedTime[MIN];
     workedTime[SEC]     = _workedTime[SEC];
     int today = dayCnt-1;
+    int oneDay[3] = {0};
 
     for(int i=dayX; i<=dayY; i++)
     {
         if( (i==dayY) && (dayY==today) ) //if dayY is Today
         {
             workedTime[SEC] += nowTime[SEC] - inTime[i][SEC]; // -59 to 59
+            oneDay[SEC] = nowTime[SEC] - inTime[i][SEC]; // -59 to 59
             workedTime[MIN] += nowTime[MIN] - inTime[i][MIN]; // -59 to 59
+            oneDay[MIN] = nowTime[MIN] - inTime[i][MIN]; // -59 to 59
             workedTime[HR] += nowTime[HR] - inTime[i][HR];
+            oneDay[HR] = nowTime[HR] - inTime[i][HR];
         }
         else
         {
             workedTime[SEC] += outTime[i][SEC] - inTime[i][SEC]; // -59 to 59
+            oneDay[SEC] = outTime[i][SEC] - inTime[i][SEC]; // -59 to 59
             workedTime[MIN] += outTime[i][MIN] - inTime[i][MIN]; // -59 to 59
+            oneDay[MIN] = outTime[i][MIN] - inTime[i][MIN]; // -59 to 59
             workedTime[HR] += outTime[i][HR] - inTime[i][HR];
+            oneDay[HR] = outTime[i][HR] - inTime[i][HR];
         }
-        //check overFlow
-        if(workedTime[SEC] > 59)
-        {
-            workedTime[SEC] -= 60;
-            workedTime[MIN]++;
-        }
-        else if(workedTime[SEC] < 0)
-        {
-            workedTime[SEC] += 60;
-            workedTime[MIN]--;
-        }
-        if(workedTime[MIN] > 59)
-        {
-            workedTime[MIN] -= 60;
-            workedTime[HR]++;
-        }
-        else if(workedTime[MIN] < 0)
-        {
-            workedTime[MIN] += 60;
-            workedTime[HR]--;
-        }
+        checkOverflow(workedTime);
+        checkOverflow(oneDay);
+
 #ifdef DEBUG
-    printf("DEBUG: day[%d] worked %02d:%02d:%02d\n", i, workedTime[HR], workedTime[MIN], workedTime[SEC]);
+    printf("DEBUG: day[%d] worked %02d:%02d:%02d\n", i, oneDay[HR], oneDay[MIN], oneDay[SEC]);
 #endif
        } 
 
