@@ -134,6 +134,53 @@ void readFile(int** inTime, int** outTime, int** week, int* out_weekCnt, int* ou
     *out_dayCnt = dayCnt;
 }
 
+void adjTime(int* _N)
+{
+    int N[3] = {0};
+    N[SEC] = _N[SEC];
+    N[MIN] = _N[MIN];
+    N[HR] = _N[HR];
+
+    while( N[SEC] > 59)
+    {
+        N[SEC] -= 60; 
+        N[MIN]++;
+    }
+    while( N[SEC] < -59)
+    {
+        N[SEC] += 60; 
+        N[MIN]--;
+    }
+    while( N[MIN] > 59)
+    {
+        N[MIN] -= 60; 
+        N[HR]++;
+    }
+    while( N[MIN] < -59)
+    {
+        N[MIN] += 60; 
+        N[HR]--;
+    }
+
+/*************************************************/
+/*************************************************/
+
+    while( (N[HR]>0) && (N[MIN]<0) )
+    {   
+        N[MIN] += 60;
+        N[HR]--;
+    }
+    while( (N[MIN]>0) && (N[SEC]<0) )
+    {   
+        N[SEC] += 60;
+        N[MIN]--;
+    }
+
+    _N[SEC] = N[SEC];
+    _N[MIN] = N[MIN];
+    _N[HR] = N[HR];
+}
+
 void checkOverflow(int *T){
         if(T[SEC] > 59)
         {
@@ -167,12 +214,12 @@ void calcWorkedTime(int* _workedTime, int dayX, int dayY, int dayCnt, int** inTi
     int oneDay[3] = {0};
 
     for(int i=dayX; i<=dayY; i++)
-        printf("%d IN- %d:%d:%d OUT- %d:%d:%d\n", i, inTime[i][HR], 
-                                                           inTime[i][MIN],
-                                                           inTime[i][SEC], 
-                                                           outTime[i][HR],
-                                                           outTime[i][MIN], 
-                                                           outTime[i][SEC]);
+        printf("%d IN- %02d:%02d:%02d OUT- %02d:%02d:%02d\n", i, inTime[i][HR], 
+                                                                 inTime[i][MIN],
+                                                                 inTime[i][SEC], 
+                                                                 outTime[i][HR], 
+                                                                 outTime[i][MIN], 
+                                                                 outTime[i][SEC]);
     for(int i=dayX; i<=dayY; i++)
     {
         if( (i==dayY) && (dayY==today) ) //if dayY is Today
@@ -193,8 +240,10 @@ void calcWorkedTime(int* _workedTime, int dayX, int dayY, int dayCnt, int** inTi
             workedTime[HR] += outTime[i][HR] - inTime[i][HR];
             oneDay[HR] = outTime[i][HR] - inTime[i][HR];
         }
-        checkOverflow(workedTime);
-        checkOverflow(oneDay);
+        //checkOverflow(workedTime);
+        adjTime(workedTime);
+        //checkOverflow(oneDay);
+        adjTime(oneDay);
 
 #ifdef DEBUG
     printf("DEBUG: day[%d] worked %02d:%02d:%02d\n", i, oneDay[HR], oneDay[MIN], oneDay[SEC]);
@@ -216,7 +265,7 @@ void calcNetWeekTime(int* _workedTime, int* _netWeekTime, int* totalWeekTime, in
     N[SEC] = totalWeekTime[SEC] - _workedTime[SEC]; // -59 to 59
     N[MIN] = totalWeekTime[MIN] - _workedTime[MIN]; // -59 to 59
     N[HR] = totalWeekTime[HR] - _workedTime[HR];
-    
+/* 
     if( N[HR]>0 )
         checkOverflow(N);
     else if( (N[MIN]>0) && (N[SEC]<0) )
@@ -234,6 +283,8 @@ void calcNetWeekTime(int* _workedTime, int* _netWeekTime, int* totalWeekTime, in
         N[MIN] += 60;
         N[HR]--;
     }
+*/
+    adjTime(N);
 
 #ifdef DEBUG
     printf("DEBUG; netTime(before min) \"%d:%d:%d\" \n", N[HR], N[MIN], N[SEC]);
@@ -263,13 +314,16 @@ void calcRemDayTime(int* netWTime, int dayY, int* nowTime)
     int _minRemWeekTime[3] = {0};
     int _norRemWeekTime[3] = {0};
     int _remDays = 6 - (dayY%7);
-    _minRemWeekTime[HR] = (_remDays - 2) * 6;
-    _norRemWeekTime[HR] = (_remDays - 2) * 8;
-    _norRemWeekTime[MIN] = (_remDays - 2) * 30;
-    while(_norRemWeekTime[MIN] > 59)
+    if(_remDays > 2)
     {
-        _norRemWeekTime[MIN] -= 60;
-        _norRemWeekTime[HR]++;
+        _minRemWeekTime[HR] = (_remDays - 2) * 6;
+        _norRemWeekTime[HR] = (_remDays - 2) * 8;
+        _norRemWeekTime[MIN] = (_remDays - 2) * 30;
+        while(_norRemWeekTime[MIN] > 59)
+        {
+            _norRemWeekTime[MIN] -= 60;
+            _norRemWeekTime[HR]++;
+        }
     }
 
     _maxRemDTime[SEC] = netWTime[SEC] - _minRemWeekTime[SEC]; // >=0
@@ -279,6 +333,7 @@ void calcRemDayTime(int* netWTime, int dayY, int* nowTime)
     _norRemDTime[SEC] = netWTime[SEC] - _norRemWeekTime[SEC]; // >=0
     _norRemDTime[MIN] = netWTime[MIN] - _norRemWeekTime[MIN]; // >=0
     _norRemDTime[HR] = netWTime[HR] - _norRemWeekTime[HR];    // >=0
+    /*
     if( _norRemDTime[HR]>0 )
         checkOverflow(_norRemDTime);
     else if( (_norRemDTime[MIN]>0) && (_norRemDTime[SEC]<0) )
@@ -296,6 +351,8 @@ void calcRemDayTime(int* netWTime, int dayY, int* nowTime)
         _norRemDTime[MIN] += 60;
         _norRemDTime[HR]--;
     }
+    */
+    adjTime(_norRemDTime);
     
     int _leaveTime[3] = {3};
 
@@ -320,30 +377,16 @@ void offThursday(int* nowTime, int* netWTime, int dayY)
     _bufTime[SEC] = netWTime[SEC]; // >=0
     _bufTime[MIN] = netWTime[MIN] - (30 - nowTime[MIN]); // >=0
     _bufTime[HR] = netWTime[HR] - (14 - nowTime[HR]);    // >=0
-    if( _bufTime[HR]>0 )
-        checkOverflow(_bufTime);
-    else if( (_bufTime[MIN]>0) && (_bufTime[SEC]<0) )
-    {   
-        _bufTime[SEC] += 60;
-        _bufTime[MIN]--;
-    }
-    else if( _bufTime[SEC] < (-59) )
-    {
-        _bufTime[SEC] += 60;
-        _bufTime[MIN]--;
-    }
-    else if( _bufTime[MIN] < (-59) )
-    {
-        _bufTime[MIN] += 60;
-        _bufTime[HR]--;
-    }
+
+    adjTime(_bufTime);
 
     int _remDays = 6 - (dayY%7);
     _bufTime[HR] -= (_remDays-1) * 6; // >=0
     printf("Short Shift --> offThursday @ %02d:%02d:%02d \n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);  
 
-
 }
+
+
 int main(int argc, char** argv)
 {
 // *******XXX READ_FILe XXX******* //
