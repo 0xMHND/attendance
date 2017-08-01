@@ -203,7 +203,7 @@ void calcWorkedTime(int* _workedTime, int dayX, int dayY, int dayCnt, int** inTi
     _workedTime[SEC]     = workedTime[SEC];
 }
 
-void calcNetWeekTime(int* _workedTime, int* _netWeekTime, int* totalWeekTime)
+void calcNetWeekTime(int* _workedTime, int* _netWeekTime, int* totalWeekTime, int dayY)
 {
     int N[3]   = {0};  
     N[HR]      = _netWeekTime[HR];
@@ -233,7 +233,20 @@ void calcNetWeekTime(int* _workedTime, int* _netWeekTime, int* totalWeekTime)
     }
 
 #ifdef DEBUG
-    printf("DEBUG; netTime \"%d:%d:%d\" \n", N[HR], N[MIN], N[SEC]);
+    printf("DEBUG; netTime(before min) \"%d:%d:%d\" \n", N[HR], N[MIN], N[SEC]);
+#endif
+
+    int remDays = 6 - (dayY%7);
+#ifdef DEBUG
+    printf("DEBUG; remDays %d\n", remDays);
+#endif
+    // make sure net remaining week time is above daily work minimum(8:30 to 14:30)
+    int minRemWeekTime = (remDays - 2) * 6;
+    if( N[HR] < minRemWeekTime)
+        N[HR] += minRemWeekTime;
+
+#ifdef DEBUG
+    printf("DEBUG; netTime(After min) \"%d:%d:%d\" \n", N[HR], N[MIN], N[SEC]);
 #endif
     _netWeekTime[HR] = N[HR];
     _netWeekTime[MIN] = N[MIN];
@@ -263,7 +276,7 @@ int main(int argc, char** argv)
 
     readFile( inTime, outTime, week, &weekCnt, &dayCnt);
 #ifdef DEBUG
-    printf("weekCnt - %d\tdayCnt - %d\n", weekCnt, dayCnt);
+    printf("weekCnt=%d\tdayCnt=%d\n", weekCnt, dayCnt);
 #endif
 
 // *******XXX ARGV XXX******* //
@@ -299,7 +312,7 @@ int main(int argc, char** argv)
 #endif
 
     int _netWeekTime[3] = {0};
-    calcNetWeekTime(_workedTime, _netWeekTime, _totalWTime);
+    calcNetWeekTime(_workedTime, _netWeekTime, _totalWTime, dayY);
 /*
     curWeek( weekCnt,  inTime,  outTime, timeinfo);
     oneWeek( WEEK_NUM,  inTime,  outTime, timeinfo);
