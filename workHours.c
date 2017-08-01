@@ -176,6 +176,12 @@ void adjTime(int* _N)
         N[MIN]--;
     }
 
+//account for when HR < 0 but MIN > 0 and SEC > 0
+    if(N[HR] < 0){
+        N[SEC] *= -1;
+        N[MIN] *= -1;
+    }
+
     _N[SEC] = N[SEC];
     _N[MIN] = N[MIN];
     _N[HR] = N[HR];
@@ -356,7 +362,7 @@ void calcRemDayTime(int* netWTime, int dayY, int* nowTime)
     
     int _leaveTime[3] = {3};
 
-    printf("Maximum shift : %02d:%02d:%02d", _maxRemDTime[HR], _maxRemDTime[MIN], _maxRemDTime[SEC]);
+    printf("Maximum shift : %02d:%02d:%02d ", _maxRemDTime[HR], _maxRemDTime[MIN], _maxRemDTime[SEC]);
     _leaveTime[SEC] = nowTime[SEC] + _maxRemDTime[SEC]; // >=0
     _leaveTime[MIN] = nowTime[MIN] + _maxRemDTime[MIN]; // >=0
     _leaveTime[HR] = nowTime[HR] + _maxRemDTime[HR];    // >=0
@@ -366,6 +372,7 @@ void calcRemDayTime(int* netWTime, int dayY, int* nowTime)
     _leaveTime[SEC] = nowTime[SEC] + _norRemDTime[SEC]; // >=0
     _leaveTime[MIN] = nowTime[MIN] + _norRemDTime[MIN]; // >=0
     _leaveTime[HR] = nowTime[HR] + _norRemDTime[HR];    // >=0
+    adjTime(_leaveTime);
     printf(" @ %02d:%02d:%02d\n", _leaveTime[HR], _leaveTime[MIN], _leaveTime[SEC]);
 
 }
@@ -378,11 +385,36 @@ void offThursday(int* nowTime, int* netWTime, int dayY)
     _bufTime[MIN] = netWTime[MIN] - (30 - nowTime[MIN]); // >=0
     _bufTime[HR] = netWTime[HR] - (14 - nowTime[HR]);    // >=0
 
+#ifdef DEBUG
+    printf("DEBUG: buf(before adj) -- %02d:%02d:%02d\n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);
+#endif
     adjTime(_bufTime);
+#ifdef DEBUG
+    printf("DEBUG: buf(after adj) -- %02d:%02d:%02d\n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);
+#endif
 
     int _remDays = 6 - (dayY%7);
     _bufTime[HR] -= (_remDays-1) * 6; // >=0
-    printf("Short Shift --> offThursday @ %02d:%02d:%02d \n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);  
+#ifdef DEBUG
+    printf("DEBUG: buf(before adj - nextDays inc) -- %02d:%02d:%02d\n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);
+#endif
+    adjTime(_bufTime);
+#ifdef DEBUG
+    printf("DEBUG: buf(after adj - nextDays inc) -- %02d:%02d:%02d\n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);
+#endif
+
+    int _leaveTime[3] = {0};
+    _leaveTime[SEC] = _bufTime[SEC]; // >=0
+    _leaveTime[MIN] = _bufTime[MIN] + 30;
+    _leaveTime[HR] = _bufTime[HR] + 14;
+
+    // -1:53:00
+    // 14:30:00
+    //
+    // 14:23:00
+    adjTime(_leaveTime);
+    printf("Short Shift --> offThursday @ %02d:%02d:%02d     ---- buf %02d:%02d:%02d\n", _leaveTime[HR], _leaveTime[MIN], _leaveTime[SEC],
+                                                                                         _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);  
 
 }
 
