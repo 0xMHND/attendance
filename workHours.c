@@ -1,5 +1,6 @@
 //
 //FIXME: currently only 1 year
+//TODO: add a "VERBOSE" mode + the DEBUG mode
 //
 //FIXME: search for 'malloc' and then free it
 //
