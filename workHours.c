@@ -12,7 +12,7 @@
 
 #define FILENAME "attendance"
 #ifdef DEBUG
-#define FILENAME "randomWeekG/randomWeek"
+//#define FILENAME "randomWeekG/randomWeek"
 #endif
 #define LINE_MAX 50
 #define WEEK_MAX 52
@@ -228,7 +228,7 @@ void calcWorkedTime(int* _workedTime, int dayX, int dayY, int dayCnt, int** inTi
                                                                  outTime[i][SEC]);
     for(int i=dayX; i<=dayY; i++)
     {
-        if( (i==dayY) && (dayY==today) ) //if dayY is Today
+        if( (i==dayY) && (dayY==today) && (outTime[i][HR]==0) && (outTime[i][MIN]==0) && (outTime[i][SEC]==0)) //if dayY is Today
         {
             workedTime[SEC] += nowTime[SEC] - inTime[i][SEC]; // -59 to 59
             oneDay[SEC] = nowTime[SEC] - inTime[i][SEC]; // -59 to 59
