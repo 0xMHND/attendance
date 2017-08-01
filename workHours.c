@@ -203,6 +203,43 @@ void calcWorkedTime(int* _workedTime, int dayX, int dayY, int dayCnt, int** inTi
     _workedTime[SEC]     = workedTime[SEC];
 }
 
+void calcNetWeekTime(int* _workedTime, int* _netWeekTime, int* totalWeekTime)
+{
+    int N[3]   = {0};  
+    N[HR]      = _netWeekTime[HR];
+    N[MIN]     = _netWeekTime[MIN];
+    N[SEC]     = _netWeekTime[SEC];
+
+    N[SEC] = totalWeekTime[SEC] - _workedTime[SEC]; // -59 to 59
+    N[MIN] = totalWeekTime[MIN] - _workedTime[MIN]; // -59 to 59
+    N[HR] = totalWeekTime[HR] - _workedTime[HR];
+    
+    if( N[HR]>0 )
+        checkOverflow(N);
+    else if( (N[MIN]>0) && (N[SEC]<0) )
+    {   
+        N[SEC] += 60;
+        N[MIN]--;
+    }
+    else if( N[SEC] < (-59) )
+    {
+        N[SEC] += 60;
+        N[MIN]--;
+    }
+    else if( N[MIN] < (-59) )
+    {
+        N[MIN] += 60;
+        N[HR]--;
+    }
+
+#ifdef DEBUG
+    printf("DEBUG; netTime \"%d:%d:%d\" \n", N[HR], N[MIN], N[SEC]);
+#endif
+    _netWeekTime[HR] = N[HR];
+    _netWeekTime[MIN] = N[MIN];
+    _netWeekTime[SEC] = N[SEC];
+}
+
 int main(int argc, char** argv)
 {
 // *******XXX READ_FILe XXX******* //
@@ -260,6 +297,9 @@ int main(int argc, char** argv)
 #ifdef DEBUG
     printf("DEBUG: tot_worked %02d:%02d:%02d\n", _workedTime[HR], _workedTime[MIN], _workedTime[SEC]);
 #endif
+
+    int _netWeekTime[3] = {0};
+    calcNetWeekTime(_workedTime, _netWeekTime, _totalWTime);
 /*
     curWeek( weekCnt,  inTime,  outTime, timeinfo);
     oneWeek( WEEK_NUM,  inTime,  outTime, timeinfo);
