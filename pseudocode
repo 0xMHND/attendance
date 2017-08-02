@@ -1,8 +1,61 @@
-Mode:
-    0- normal Shift // in 7:00 out 15:30
-    1- short Shift // in 8:30 out 14:30
-(constant?) _totalWTime = 40:00:00 + 5(00:30:00)  // 40 hr/week + 5 'lunch-break'
+CALC:    
+    what is the supposed week's total work? >>> _totalWeekTime
+             WORK_DAYS_PER_WEEK, WEEK_WORK_REQ, LUNCH_BREAK
+    what is th supposed daily average? (total req./5)  >>> _dailyAvg
+            _totalWeekTime
+    what is the supposed total work? >>> _totalTime
+             _dailyAvg, _daysCnt
+    How many hrs have i worked? >>> _myTotalTime
+            _inTime, _outTime, _nowTime  
+    how many hrs left in the week?  >>> _weekLeft
+            _totalWeekTime, _myTotalTime
+    how many hrs left on top of the minimum daily work time(8:30 t0 14:30) ?  >>> _minWeekLeft
+            _totalWeekTime, _myTotalTime, MIN_DAILY_TIME, _daysCnt
 
+    when should i leave today, given next days are 
+                         normal days? >>> _norLeaveToday
+                         short days? >>> _shLeaveToday
+            _totalWeekTime, _myTotalTime, MIN_DAILY_TIME, _daysCnt, _nowTime
+
+    when will i leave on Thursday if i leave
+                                normal day (in + avg)? >>> _norThursdayLeave
+                                short (14:30)?  >>> _shThursdayLeave
+                                now? (print notice if before 14:30)? >>> _nowThursdayLeave
+            _totalWTime, _totalWorked, MIN_DAILY_TIME, _daysCnt, _nowTime
+
+    what is my avg_worked/week?
+    what is my avg_worked/day?
+    what is my longest work day? how long?
+    how many late?
+    how many absent?
+
+SHOW:
+    current day in the form [**********************], one asterisk == 30 min
+*************************************************************************************************************************
+
+VAR: 
+_totalWTime = 40:00:00 + 5(00:30:00)  // 40 hr/week + 5 'lunch-break'
+_nowTime = current time; 
+
+_numWeek = Computed Week Number // do I need this?
+    _period[from]
+    _period[to]
+
+_minRemWTime = (6:00:00) * remDays // short shift for rem. Days
+_norRemWTime = (8:30:00) * remDays // normal shift for rem. Days
+_workedTime = //oneday 
+_weekNetTime // Net week time. (wrokedTime - total Week Time) 
+_maxRemDTime = how long to work so next days are short shift // remaining day time w/ 8:30-14:30 next days. (Short shift)
+_norRemDTime = how long to work so next days are normal shift// remaining day time w/ 7:00-15:30 next days. (Normal shift)
+
+_minRemWTime =  remaining days * 6hr // how
+_norRemWTime = 
+
+*************************************************************************************************************************
+
+Mode:
+    0- normal Shift // average work hrs
+    1- short Shift // in 8:30 out 14:30
 
 get data from attendacne sheet
     week info:
