@@ -393,9 +393,9 @@ void offThursday(int* nowTime, int* netWTime, int dayY)
 #ifdef DEBUG
     printf("DEBUG: buf(after adj) -- %02d:%02d:%02d\n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);
 #endif
-
+// 0 S, 1 M, 2 T, 3 W, 4 R, 5 F, 6 U
     int _remDays = 6 - (dayY%7);
-    _bufTime[HR] -= (_remDays-1) * 6; // >=0
+    _bufTime[HR] -= (_remDays-2) * 6; 
 #ifdef DEBUG
     printf("DEBUG: buf(before adj - nextDays inc) -- %02d:%02d:%02d\n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);
 #endif
@@ -415,6 +415,24 @@ void offThursday(int* nowTime, int* netWTime, int dayY)
     // 14:23:00
     adjTime(_leaveTime);
     printf("Short Shift --> offThursday @ %02d:%02d:%02d     ---- buf %02d:%02d:%02d\n", _leaveTime[HR], _leaveTime[MIN], _leaveTime[SEC],
+                                                                                         _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);  
+    // buf - (1:00 + (_remDays - 3)*2:30:00 )
+    _bufTime[HR] -= 1 + (_remDays-3) * 2; // one hour (inst. 14:30 -> 15:30) + remDays ex/Thursday (8:30 hrs) shift.
+    _bufTime[MIN] -= (_remDays-3) * 30; // one hour (inst. 14:30 -> 15:30) + remDays ex/Thursday (8:30 hrs) shift.
+#ifdef DEBUG
+    printf("DEBUG: buf(before adj - nextDays inc) -- %02d:%02d:%02d\n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);
+#endif
+    adjTime(_bufTime);
+#ifdef DEBUG
+    printf("DEBUG: buf(after adj - nextDays inc) -- %02d:%02d:%02d\n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);
+#endif
+
+    _leaveTime[SEC] = _bufTime[SEC]; // >=0
+    _leaveTime[MIN] = _bufTime[MIN] + 30;
+    _leaveTime[HR] = _bufTime[HR] + 14;
+
+    adjTime(_leaveTime);
+    printf("Normal Shift --> offThursday @ %02d:%02d:%02d     ---- buf %02d:%02d:%02d\n", _leaveTime[HR], _leaveTime[MIN], _leaveTime[SEC],
                                                                                          _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);  
 
 }
