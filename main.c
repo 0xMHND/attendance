@@ -146,6 +146,7 @@ void readFile(int** inTime, int** outTime, int** week, int* out_weekCnt, int* ou
     *out_dayCnt = dayCnt;
 }
 
+// FIXME: BUG| this doesn't fix 3:00:-xx
 void adjTime(int* _N)
 {
     int N[3] = {0};
@@ -177,12 +178,12 @@ void adjTime(int* _N)
 /*************************************************/
 /*************************************************/
 
-    while( (N[HR]>0) && (N[MIN]<0) )
+    while( (N[HR]>=0) && (N[MIN]<0) )
     {   
         N[MIN] += 60;
         N[HR]--;
     }
-    while( (N[MIN]>0) && (N[SEC]<0) )
+    while( (N[MIN]>=0) && (N[SEC]<0) )
     {   
         N[SEC] += 60;
         N[MIN]--;
@@ -190,8 +191,10 @@ void adjTime(int* _N)
 
 //account for when HR < 0 but MIN > 0 and SEC > 0
     if(N[HR] < 0){
-        N[SEC] *= -1;
-        N[MIN] *= -1;
+        if(N[SEC] >= 0)
+            N[SEC] *= -1;
+        if(N[MIN] >= 0)
+            N[MIN] *= -1;
     }
 
     _N[SEC] = N[SEC];
