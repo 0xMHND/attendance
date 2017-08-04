@@ -254,6 +254,10 @@ void calcWorkedTime(int* _workedTime, int dayX, int dayY, int dayCnt, int** inTi
             oneDay[MIN] = nowTime[MIN] - inTime[i][MIN]; // -59 to 59
             workedTime[HR] += nowTime[HR] - inTime[i][HR];
             oneDay[HR] = nowTime[HR] - inTime[i][HR];
+#ifdef DEBUG
+    printf("DEBUG: TODAY[%d] worked %02d:%02d:%02d\n", i, oneDay[HR], oneDay[MIN], oneDay[SEC]);
+    printf("DEBUG: nowTime  %02d:%02d:%02d \n", nowTime[HR], nowTime[MIN], nowTime[SEC]);
+#endif
         }
         else
         {
@@ -377,6 +381,7 @@ void offThursday(int* nowTime, int* netWTime, int dayY)
     _bufTime[SEC] = netWTime[SEC]; // >=0
     _bufTime[MIN] = netWTime[MIN] - (30 - nowTime[MIN]); // >=0
     _bufTime[HR] = netWTime[HR] - (14 - nowTime[HR]);    // >=0
+    int today = dayY%7;
 
 #ifdef DEBUG
     printf("DEBUG: buf(before adj) -- %02d:%02d:%02d\n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);
@@ -432,7 +437,8 @@ void offThursday(int* nowTime, int* netWTime, int dayY)
                                                                                          _bufTime[HR], _bufTime[MIN], _bufTime[SEC]); 
 #endif
     
-    printf("if you work today until 14:30, then you leave Thursday at %02d:%02d:%02d\n", _shLeaveTime[HR], _shLeaveTime[MIN], _shLeaveTime[SEC]); 
+    if(today<4) // if berofr thursday
+        printf("if you work today until 14:30, then you leave Thursday at %02d:%02d:%02d\n", _shLeaveTime[HR], _shLeaveTime[MIN], _shLeaveTime[SEC]); 
 }
 
 int calcTotalWeekTime(int* _totalWeekTime)
@@ -484,6 +490,19 @@ int calcTotal(int* _result, int* _avg, int _period)
 
     return 0;
 }
+
+int calcWeekRemTime(int* _totalWeekTime, int* _myTotalWeekTime)
+{
+    int leftWeek[3] = {0};
+    leftWeek[SEC] = _totalWeekTime[SEC] - _myTotalWeekTime[SEC];
+    leftWeek[MIN] = _totalWeekTime[MIN] - _myTotalWeekTime[MIN];
+    leftWeek[HR] = _totalWeekTime[HR] - _myTotalWeekTime[HR];
+
+    adjTime(leftWeek);
+
+    printf(" -- Left in the week: %02d:%02d:%02d\n", leftWeek[HR], leftWeek[MIN], leftWeek[SEC]);
+    return 0; 
+}
 int main(int argc, char** argv)
 {
     int dayY = 0;
@@ -498,6 +517,7 @@ int main(int argc, char** argv)
     int dailyAvg[3] = {0};
     int totalTime[3] = {0}; // 40 Hr/week + 5(00:30:00)'lunch break'
     int myTotalTime[3] = {0};
+    int myWeekTime[3] = {0};
 
     calcTotalWeekTime(totalWeekTime);
     printf(" -- Total work hours per week : %02d:%02d:%02d\n", totalWeekTime[HR], totalWeekTime[MIN], totalWeekTime[SEC]); 
@@ -522,7 +542,7 @@ int main(int argc, char** argv)
     }
 
     readFile( inTime, outTime, week, &weekCnt, &dayCnt);
-#ifdef DEBUG
+#ifdef DEBUG 
     printf("weekCnt=%d\tdayCnt=%d\n", weekCnt, dayCnt);
 #endif
 
@@ -534,6 +554,10 @@ int main(int argc, char** argv)
 // *******    ARGV    ******* //
     getArgv(argc, argv, &dayX, &dayY, dayCnt, weekCnt);
 
+    calcWorkedTime( myWeekTime, dayX, dayY, dayCnt, inTime, outTime, nowTime);
+    printf(" -- my week work time until today: %02d:%02d:%02d\n", myWeekTime[HR], myWeekTime[MIN], myWeekTime[SEC]);
+
+    calcWeekRemTime(totalWeekTime, myWeekTime);
 // *******    TIME    ******* //
     time_t rawtime;
     time( &rawtime );
