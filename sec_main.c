@@ -1,4 +1,3 @@
-//
 //FIXME: currently only 1 year
 //
 //TODO: 
@@ -40,7 +39,114 @@ const int WORK_DAYS_PER_WEEK = 5;
 //
 
 enum time{HR, MIN, SEC, DAY};
+void adjTime(int* _N)
+{
+    int N[3] = {0};
+    N[SEC] = _N[SEC];
+    N[MIN] = _N[MIN];
+    N[HR] = _N[HR];
+#ifdef DEBUG
+            printf("DEBUG: adjTime(1) IN- %d:%d:%d OUT- %d:%d:%d\n", _N[HR], _N[MIN], _N[SEC], N[HR], N[MIN], N[SEC]);
+#endif
+
+    while( N[SEC] > 59)
+    {
+        N[SEC] -= 60; 
+        N[MIN]++;
+    }
+    while( N[SEC] < -59)
+    {
+        N[SEC] += 60; 
+        N[MIN]--;
+    }
+    while( N[MIN] > 59)
+    {
+        N[MIN] -= 60; 
+        N[HR]++;
+    }
+    while( N[MIN] < -59)
+    {
+        N[MIN] += 60; 
+        N[HR]--;
+    }
+
+#ifdef DEBUG
+            printf("DEBUG: adjTime(2) IN- %d:%d:%d OUT- %d:%d:%d\n", _N[HR], _N[MIN], _N[SEC], N[HR], N[MIN], N[SEC]);
+#endif
+/*************************************************/
+/*************************************************/
+
+// if HR is - but MIN is + (HR++, MIN-60) || if MIN is - but SEC is + (MIN++, SEC-60)
+// if MIN is - but HR is + (HR--, MIN+60) || if SEC is - but MIN is + (MIN--, SEC+60)
+
+
+    while( (N[HR]>=0) && (N[MIN]<0) )
+    {   
+        N[MIN] += 60;
+        N[HR]--;
+    }
+    while( (N[MIN]>=0) && (N[SEC]<0) )
+    {   
+        N[SEC] += 60;
+        N[MIN]--;
+    }
+
+#ifdef DEBUG
+            printf("DEBUG: adjTime(1) IN- %d:%d:%d OUT- %d:%d:%d\n", _N[HR], _N[MIN], _N[SEC], N[HR], N[MIN], N[SEC]);
+#endif
+//account for when HR < 0 but MIN > 0 and SEC > 0
+    if(N[HR] < 0){
+        if(N[SEC] >= 0)
+            N[SEC] *= -1;
+        if(N[MIN] >= 0)
+            N[MIN] *= -1;
+    }
+#ifdef DEBUG
+            printf("DEBUG: adjTime(4) IN- %d:%d:%d OUT- %d:%d:%d\n", _N[HR], _N[MIN], _N[SEC], N[HR], N[MIN], N[SEC]);
+#endif
+
+    _N[SEC] = N[SEC];
+    _N[MIN] = N[MIN];
+    _N[HR] = N[HR];
+}
+
+void checkOverflow(int *T){
+        if(T[SEC] > 59)
+        {
+            T[SEC] -= 60;
+            T[MIN]++;
+        }
+        else if(T[SEC] < 0)
+        {
+            T[SEC] += 60;
+            T[MIN]--;
+        }
+        if(T[MIN] > 59)
+        {
+            T[MIN] -= 60;
+            T[HR]++;
+        }
+        else if(T[MIN] < 0)
+        {
+            T[MIN] += 60;
+            T[HR]--;
+        }
+}
 enum days{Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday};
+int convert_from_sec(int* n, long long s)
+{
+    long long temp = s;
+    n[HR] = (temp/3600);
+    temp = (temp%3600);
+    n[MIN] = temp/60; 
+    n[SEC] = temp%60;
+return 0;
+}
+int convert_to_sec(int* n, long long* s)
+{
+    *s = n[SEC] + 60*n[MIN] + 3600*n[HR]; 
+return 0; 
+}
 
 // 4 cases:
 //      Curr. Week:      no arg.
@@ -146,141 +252,51 @@ void readFile(int** inTime, int** outTime, int** week, int* out_weekCnt, int* ou
     *out_dayCnt = dayCnt;
 }
 
-// FIXME: BUG| this doesn't fix 3:00:-xx
-void adjTime(int* _N)
+
+void calcWorkedSec(long long* _workedTime, int dayX, int dayY, int dayCnt, long long* _inSec, long long* _outSec, long long _nowSec)
 {
-    int N[3] = {0};
-    N[SEC] = _N[SEC];
-    N[MIN] = _N[MIN];
-    N[HR] = _N[HR];
-
-    while( N[SEC] > 59)
-    {
-        N[SEC] -= 60; 
-        N[MIN]++;
-    }
-    while( N[SEC] < -59)
-    {
-        N[SEC] += 60; 
-        N[MIN]--;
-    }
-    while( N[MIN] > 59)
-    {
-        N[MIN] -= 60; 
-        N[HR]++;
-    }
-    while( N[MIN] < -59)
-    {
-        N[MIN] += 60; 
-        N[HR]--;
-    }
-
-/*************************************************/
-/*************************************************/
-
-    while( (N[HR]>=0) && (N[MIN]<0) )
-    {   
-        N[MIN] += 60;
-        N[HR]--;
-    }
-    while( (N[MIN]>=0) && (N[SEC]<0) )
-    {   
-        N[SEC] += 60;
-        N[MIN]--;
-    }
-
-//account for when HR < 0 but MIN > 0 and SEC > 0
-    if(N[HR] < 0){
-        if(N[SEC] >= 0)
-            N[SEC] *= -1;
-        if(N[MIN] >= 0)
-            N[MIN] *= -1;
-    }
-
-    _N[SEC] = N[SEC];
-    _N[MIN] = N[MIN];
-    _N[HR] = N[HR];
-}
-
-void checkOverflow(int *T){
-        if(T[SEC] > 59)
-        {
-            T[SEC] -= 60;
-            T[MIN]++;
-        }
-        else if(T[SEC] < 0)
-        {
-            T[SEC] += 60;
-            T[MIN]--;
-        }
-        if(T[MIN] > 59)
-        {
-            T[MIN] -= 60;
-            T[HR]++;
-        }
-        else if(T[MIN] < 0)
-        {
-            T[MIN] += 60;
-            T[HR]--;
-        }
-}
-
-void calcWorkedTime(int* _workedTime, int dayX, int dayY, int dayCnt, int** inTime, int** outTime, int* nowTime)
-{
-    int workedTime[3]   = {0};
-    workedTime[HR]      = _workedTime[HR];
-    workedTime[MIN]     = _workedTime[MIN];
-    workedTime[SEC]     = _workedTime[SEC];
+    long long workedTime = 0;
+    workedTime = *_workedTime;
     int today = dayCnt-1;
-    int oneDay[3] = {0};
+    int wday = today%7;
+    printf("wday:%d\n", wday);
+    long long oneDay = 0;
 
 #ifdef DEBUG
+    int oneDay_v[3] = {0};
 // print the period's log
     for(int i=dayX; i<=dayY; i++)
-        printf("%03d IN- %02d:%02d:%02d OUT- %02d:%02d:%02d\n", i, inTime[i][HR], 
-                                                                 inTime[i][MIN],
-                                                                 inTime[i][SEC], 
-                                                                 outTime[i][HR], 
-                                                                 outTime[i][MIN], 
-                                                                 outTime[i][SEC]);
+        printf("%03d IN- %lldd OUT- %lld\n", i, _inSec[i], _outSec[i]);
 #endif
     for(int i=dayX; i<=dayY; i++)
     {
-        if( (i==dayY) && (dayY==today) && (outTime[i][HR]==0) && (outTime[i][MIN]==0) && (outTime[i][SEC]==0)) //if dayY is Today
+        if( (i==dayY) && (dayY==today) && (_outSec[i]==0)) //if dayY is Today
         {
-            workedTime[SEC] += nowTime[SEC] - inTime[i][SEC]; // -59 to 59
-            oneDay[SEC] = nowTime[SEC] - inTime[i][SEC]; // -59 to 59
-            workedTime[MIN] += nowTime[MIN] - inTime[i][MIN]; // -59 to 59
-            oneDay[MIN] = nowTime[MIN] - inTime[i][MIN]; // -59 to 59
-            workedTime[HR] += nowTime[HR] - inTime[i][HR];
-            oneDay[HR] = nowTime[HR] - inTime[i][HR];
+            workedTime += _nowSec - _inSec[i]; // -59 to 59
+            oneDay = _nowSec - _inSec[i]; // -59 to 59
+
 #ifdef DEBUG
-    printf("DEBUG: TODAY[%d] worked %02d:%02d:%02d\n", i, oneDay[HR], oneDay[MIN], oneDay[SEC]);
-    printf("DEBUG: nowTime  %02d:%02d:%02d \n", nowTime[HR], nowTime[MIN], nowTime[SEC]);
+    convert_from_sec(oneDay_v, oneDay);
+    printf("DEBUG: TODAY[%d] worked %02d:%02d:%02d\n", i, oneDay_v[HR], oneDay_v[MIN], oneDay_v[SEC]);
+    printf("DEBUG: nowTime %lld \n", _nowSec);
 #endif
         }
         else
         {
-            workedTime[SEC] += outTime[i][SEC] - inTime[i][SEC]; // -59 to 59
-            oneDay[SEC] = outTime[i][SEC] - inTime[i][SEC]; // -59 to 59
-            workedTime[MIN] += outTime[i][MIN] - inTime[i][MIN]; // -59 to 59
-            oneDay[MIN] = outTime[i][MIN] - inTime[i][MIN]; // -59 to 59
-            workedTime[HR] += outTime[i][HR] - inTime[i][HR];
-            oneDay[HR] = outTime[i][HR] - inTime[i][HR];
+            workedTime += _outSec[i] - _inSec[i]; // -59 to 59
+            oneDay = _outSec[i] - _inSec[i]; // -59 to 59
         }
-        adjTime(workedTime);
-        //checkOverflow(oneDay);
-        adjTime(oneDay);
 
 #ifdef DEBUG
-    printf("DEBUG: day[%d] worked %02d:%02d:%02d\n", i, oneDay[HR], oneDay[MIN], oneDay[SEC]);
-    printf("DEBUG: day[%d] worked %02d:%02d:%02d so far\n", i, workedTime[HR], workedTime[MIN], workedTime[SEC]);
+    int worked_temp[3] = {0};
+    convert_from_sec(oneDay_v, oneDay);
+    convert_from_sec(worked_temp, workedTime);
+    printf("DEBUG: day[%d] worked %02d:%02d:%02d\n", i, oneDay_v[HR], oneDay_v[MIN], oneDay_v[SEC]);
+    printf("DEBUG: day[%d] worked %02d:%02d:%02d so far\n", i, worked_temp[HR], worked_temp[MIN], worked_temp[SEC]);
 #endif
        } 
 
-    _workedTime[HR]      = workedTime[HR];
-    _workedTime[MIN]     = workedTime[MIN];
-    _workedTime[SEC]     = workedTime[SEC];
+    *_workedTime = workedTime;
 }
 
 void calcNetWeekTime(int* _workedTime, int* _netWeekTime, int* totalWeekTime, int dayY)
@@ -441,68 +457,51 @@ void offThursday(int* nowTime, int* netWTime, int dayY)
         printf("if you work today until 14:30, then you leave Thursday at %02d:%02d:%02d\n", _shLeaveTime[HR], _shLeaveTime[MIN], _shLeaveTime[SEC]); 
 }
 
-int calcTotalWeekTime(int* _totalWeekTime)
+int calcTotalWeekSec(long long* _totalWeekTime)
 {
-    int temp[3] = {0};
-    temp[SEC] = WEEK_WORK_REQ[SEC] + ( LUNCH_BREAK[SEC] * WORK_DAYS_PER_WEEK);
-    temp[MIN] = WEEK_WORK_REQ[MIN] + ( LUNCH_BREAK[MIN] * WORK_DAYS_PER_WEEK);
-    temp[HR] = WEEK_WORK_REQ[HR] + ( LUNCH_BREAK[HR] * WORK_DAYS_PER_WEEK);
+    long long temp = 0;
+    temp = ( WEEK_WORK_REQ[SEC] + ( LUNCH_BREAK[SEC] * WORK_DAYS_PER_WEEK) ) + 
+           ( 60*(WEEK_WORK_REQ[MIN] + ( LUNCH_BREAK[MIN] * WORK_DAYS_PER_WEEK)) ) +
+           ( 3600*( WEEK_WORK_REQ[HR] + ( LUNCH_BREAK[HR] * WORK_DAYS_PER_WEEK)) ) ;
 
-    adjTime(temp);
-
-    _totalWeekTime[SEC] = temp[SEC]; 
-    _totalWeekTime[MIN] = temp[MIN]; 
-    _totalWeekTime[HR] = temp[HR];
+    printf("tmep %lld\nl", temp);
+ 
+    *_totalWeekTime = temp;
     return 0;
 }
-int avg(int* _data, int numDays, int* _avg)
+int avgSec(long long _data, int numDays, long long* _avg)
 {
-    int temp[3] = {0};
-    temp[SEC] = (_data[SEC] + ( (_data[MIN]%numDays) * 60) )/ numDays;
-    temp[MIN] = (_data[MIN] + ( (_data[HR]%numDays) * 60) )/ numDays;
-    temp[HR] = (_data[HR]/numDays);
+    long long temp = 0;
+    temp = _data/numDays;
 
-    adjTime(temp);
-
-    _avg[SEC] = temp[SEC]; 
-    _avg[MIN] = temp[MIN]; 
-    _avg[HR] = temp[HR];
+    *_avg = temp;
     return 0;
 }
 
-int calcTotal(int* _result, int* _avg, int _period)
+int calcTotalSec(long long* _result, long long _avg, int _period)
 {
-    int temp[3] = {0};
+    long long temp = 0;
     int workDays = (_period - ( ((_period/5)-1) *2) );
-    temp[SEC] = _avg[SEC] * workDays;
-    temp[MIN] = _avg[MIN] * workDays;
-    temp[HR] = _avg[HR] * workDays;
+    temp = _avg * workDays;
 
 #ifdef DEBUG
-    printf("DEBUG -- %d:%d:%d  || period: %d days\n", temp[HR], temp[MIN], temp[SEC], workDays);
+    printf("DEBUG -- %lld  || period: %d days\n", temp, workDays);
 #endif
 
-    adjTime(temp);
-
-    _result[SEC] = temp[SEC]; 
-    _result[MIN] = temp[MIN]; 
-    _result[HR] = temp[HR];
+    *_result = temp;
 
     return 0;
 }
 
-int calcWeekRemTime(int* _totalWeekTime, int* _myTotalWeekTime)
+int calcWeekRemSec(long long* _leftWeek, long long _totalWeekTime, long long _myTotalWeekTime)
 {
-    int leftWeek[3] = {0};
-    leftWeek[SEC] = _totalWeekTime[SEC] - _myTotalWeekTime[SEC];
-    leftWeek[MIN] = _totalWeekTime[MIN] - _myTotalWeekTime[MIN];
-    leftWeek[HR] = _totalWeekTime[HR] - _myTotalWeekTime[HR];
+    long long leftWeek = 0;
+    leftWeek = _totalWeekTime - _myTotalWeekTime;
+    *_leftWeek = leftWeek;
 
-    adjTime(leftWeek);
-
-    printf(" -- Left in the week: %02d:%02d:%02d\n", leftWeek[HR], leftWeek[MIN], leftWeek[SEC]);
     return 0; 
 }
+
 int main(int argc, char** argv)
 {
     int dayY = 0;
@@ -510,26 +509,60 @@ int main(int argc, char** argv)
     int weekCnt = 0;
     int dayCnt  = 0;
     int workedTime[3] = {0};
+    long long worked_sec = 0; 
+
     int _netWeekTime[3] = {0};
+    long long net_week_sec = 0; 
+
     int nowTime[4] = {0};
+    long long now_sec = 0; 
 
     int totalWeekTime[3] = {0}; // 40 Hr/week + 5(00:30:00)'lunch break'
+    long long total_week_sec = 0; 
     int dailyAvg[3] = {0};
+    long long daily_avg_sec = 0;
     int totalTime[3] = {0}; // 40 Hr/week + 5(00:30:00)'lunch break'
+    long long total_sec = 0;
     int myTotalTime[3] = {0};
+    long long my_total_sec = 0;
     int myWeekTime[3] = {0};
+    long long my_week_sec = 0;
+    int leftWeek[3] = {0};
+    long long left_week_sec = 0;
 
-    calcTotalWeekTime(totalWeekTime);
+// *******    TIME    ******* //
+    time_t rawtime;
+    time( &rawtime );
+    struct tm * timeinfo;
+    timeinfo = localtime ( &rawtime );
+
+    nowTime[HR] = timeinfo->tm_hour;
+    nowTime[MIN] = timeinfo->tm_min;
+    nowTime[SEC] = timeinfo->tm_sec;
+    nowTime[DAY] = timeinfo->tm_wday; // days since sunday(0) -> 6
+    printf ("Today is %s", asctime(timeinfo));
+    convert_to_sec(nowTime, &now_sec);
+    convert_from_sec(nowTime, now_sec);
+    printf ("in seconds %lld\n", now_sec);
+    printf ("back to %02d:%02d:%02d \n", nowTime[HR], nowTime[MIN], nowTime[SEC]);
+//--------------------------------------------
+    calcTotalWeekSec(&total_week_sec);
+    printf ("total_week seconds %lld\n", total_week_sec);
+    convert_from_sec(totalWeekTime, total_week_sec);
     printf(" -- Total work hours per week : %02d:%02d:%02d\n", totalWeekTime[HR], totalWeekTime[MIN], totalWeekTime[SEC]); 
-    avg(totalWeekTime, WORK_DAYS_PER_WEEK, dailyAvg);
+    avgSec(total_week_sec, WORK_DAYS_PER_WEEK, &daily_avg_sec);
+    printf(" -- Supposed daily average: %lld sec\n", daily_avg_sec);
+    convert_from_sec(dailyAvg, daily_avg_sec);
     printf(" -- Supposed daily average: %d:%d:%d\n", dailyAvg[HR], dailyAvg[MIN], dailyAvg[SEC]);
-    
+
 // *******    READ_FILe    ******* //
     int** week; //month, day, year
     week = malloc(sizeof(int*) * WEEK_MAX); //one year
 
     int** inTime = malloc(sizeof(int*)*7*WEEK_MAX); 
+    long long* inSec = malloc(sizeof(long long)*7*WEEK_MAX); 
     int** outTime = malloc(sizeof(int*)*7*WEEK_MAX); 
+    long long* outSec = malloc(sizeof(long long)*7*WEEK_MAX); 
     for(int i=0; i<(7*WEEK_MAX); i++)
     {
         inTime[i] = malloc(sizeof(int)*3);
@@ -545,48 +578,39 @@ int main(int argc, char** argv)
 #ifdef DEBUG 
     printf("weekCnt=%d\tdayCnt=%d\n", weekCnt, dayCnt);
 #endif
+    for(int i=0; i<dayCnt; i++)
+    { 
+        convert_to_sec(inTime[i], &inSec[i]);
+        convert_to_sec(outTime[i], &outSec[i]);
+        //printf(" -- day[%d]: IN %lld sec ----  OUT %lld\n", i, inSec[i], outSec[i]);
+    }
 
-    calcTotal(totalTime, dailyAvg, dayCnt-1);
+    calcTotalSec(&total_sec, daily_avg_sec, dayCnt-1);
+    convert_from_sec(totalTime, total_sec);
     printf(" -- Supposed total worked time until today: %02d:%02d:%02d\n", totalTime[HR], totalTime[MIN], totalTime[SEC]);
 
-    calcWorkedTime( myTotalTime, 0, dayCnt-2, dayCnt, inTime, outTime, nowTime);
+    calcWorkedSec(&my_total_sec , 0, dayCnt-1, dayCnt, inSec, outSec, now_sec);
+    convert_from_sec(myTotalTime, my_total_sec);
     printf(" -- my total worked time until today: %02d:%02d:%02d\n", myTotalTime[HR], myTotalTime[MIN], myTotalTime[SEC]);
+
 // *******    ARGV    ******* //
     getArgv(argc, argv, &dayX, &dayY, dayCnt, weekCnt);
 
-    calcWorkedTime( myWeekTime, dayX, dayY, dayCnt, inTime, outTime, nowTime);
+    calcWorkedSec( &my_week_sec, dayX, dayY, dayCnt, inSec, outSec, now_sec);
+    convert_from_sec(myWeekTime, my_week_sec);
     printf(" -- my week work time until today: %02d:%02d:%02d\n", myWeekTime[HR], myWeekTime[MIN], myWeekTime[SEC]);
 
-    calcWeekRemTime(totalWeekTime, myWeekTime);
-// *******    TIME    ******* //
-    time_t rawtime;
-    time( &rawtime );
-    struct tm * timeinfo;
-    timeinfo = localtime ( &rawtime );
-
-    nowTime[HR] = timeinfo->tm_hour;
-    nowTime[MIN] = timeinfo->tm_min;
-    nowTime[SEC] = timeinfo->tm_sec;
-    nowTime[DAY] = timeinfo->tm_wday; // days since sunday(0) -> 6
-    
-    printf ("Today is %s", asctime(timeinfo));
-    
-    //
-    // FINISHED READING DATA
-    // NOW COMPUTE 
-    //
-
-    calcWorkedTime( workedTime, dayX, dayY, dayCnt, inTime, outTime, nowTime);
-#ifdef DEBUG
-    printf("DEBUG: tot_worked %02d:%02d:%02d\n", workedTime[HR], workedTime[MIN], workedTime[SEC]);
-#endif
+    calcWeekRemSec(&left_week_sec, total_week_sec, my_week_sec);
+    convert_from_sec(leftWeek, left_week_sec);
+    printf(" -- Left in the week: %02d:%02d:%02d\n", leftWeek[HR], leftWeek[MIN], leftWeek[SEC]);
+/*
 
     calcNetWeekTime(workedTime, _netWeekTime, totalWeekTime, dayY);
     printf("\n");
     calcRemDayTime(_netWeekTime, dayY, nowTime);
-
     offThursday(nowTime, _netWeekTime, dayY);
 
+*/
 
     for(int i=0; i<(7*WEEK_MAX); i++)
     {
