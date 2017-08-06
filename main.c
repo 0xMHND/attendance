@@ -29,6 +29,8 @@ void print_shape1()
 const int LUNCH_BREAK[3] = {0,30, 0};
 const int WEEK_WORK_REQ[3] = {40, 0, 0};
 const int WORK_DAYS_PER_WEEK = 5;
+const long long MIN_DAILY_TIME = (60*60)*(6); //6 hr minimum daily from 8:30 to 14:30
+const long long NORMAL_DAILY_TIME = ( ( (60*60)*(8) ) + (60 * 30) );//8:30 nor day | 7:00 to 15:30
 
 #define NORMAL_SH   0 //in 7:00 out 15:30
 #define SHORT_SH    1 //in 8:30 out 14:30
@@ -39,99 +41,6 @@ const int WORK_DAYS_PER_WEEK = 5;
 //
 
 enum time{HR, MIN, SEC, DAY};
-void adjTime(int* _N)
-{
-    int N[3] = {0};
-    N[SEC] = _N[SEC];
-    N[MIN] = _N[MIN];
-    N[HR] = _N[HR];
-#ifdef DEBUG
-            printf("DEBUG: adjTime(1) IN- %d:%d:%d OUT- %d:%d:%d\n", _N[HR], _N[MIN], _N[SEC], N[HR], N[MIN], N[SEC]);
-#endif
-
-    while( N[SEC] > 59)
-    {
-        N[SEC] -= 60; 
-        N[MIN]++;
-    }
-    while( N[SEC] < -59)
-    {
-        N[SEC] += 60; 
-        N[MIN]--;
-    }
-    while( N[MIN] > 59)
-    {
-        N[MIN] -= 60; 
-        N[HR]++;
-    }
-    while( N[MIN] < -59)
-    {
-        N[MIN] += 60; 
-        N[HR]--;
-    }
-
-#ifdef DEBUG
-            printf("DEBUG: adjTime(2) IN- %d:%d:%d OUT- %d:%d:%d\n", _N[HR], _N[MIN], _N[SEC], N[HR], N[MIN], N[SEC]);
-#endif
-/*************************************************/
-/*************************************************/
-
-// if HR is - but MIN is + (HR++, MIN-60) || if MIN is - but SEC is + (MIN++, SEC-60)
-// if MIN is - but HR is + (HR--, MIN+60) || if SEC is - but MIN is + (MIN--, SEC+60)
-
-
-    while( (N[HR]>=0) && (N[MIN]<0) )
-    {   
-        N[MIN] += 60;
-        N[HR]--;
-    }
-    while( (N[MIN]>=0) && (N[SEC]<0) )
-    {   
-        N[SEC] += 60;
-        N[MIN]--;
-    }
-
-#ifdef DEBUG
-            printf("DEBUG: adjTime(1) IN- %d:%d:%d OUT- %d:%d:%d\n", _N[HR], _N[MIN], _N[SEC], N[HR], N[MIN], N[SEC]);
-#endif
-//account for when HR < 0 but MIN > 0 and SEC > 0
-    if(N[HR] < 0){
-        if(N[SEC] >= 0)
-            N[SEC] *= -1;
-        if(N[MIN] >= 0)
-            N[MIN] *= -1;
-    }
-#ifdef DEBUG
-            printf("DEBUG: adjTime(4) IN- %d:%d:%d OUT- %d:%d:%d\n", _N[HR], _N[MIN], _N[SEC], N[HR], N[MIN], N[SEC]);
-#endif
-
-    _N[SEC] = N[SEC];
-    _N[MIN] = N[MIN];
-    _N[HR] = N[HR];
-}
-
-void checkOverflow(int *T){
-        if(T[SEC] > 59)
-        {
-            T[SEC] -= 60;
-            T[MIN]++;
-        }
-        else if(T[SEC] < 0)
-        {
-            T[SEC] += 60;
-            T[MIN]--;
-        }
-        if(T[MIN] > 59)
-        {
-            T[MIN] -= 60;
-            T[HR]++;
-        }
-        else if(T[MIN] < 0)
-        {
-            T[MIN] += 60;
-            T[HR]--;
-        }
-}
 enum days{Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday};
 int convert_from_sec(int* n, long long s)
 {
@@ -148,6 +57,7 @@ int convert_to_sec(int* n, long long* s)
 return 0; 
 }
 
+int mode = 0;
 // 4 cases:
 //      Curr. Week:      no arg.
 //      week Z:          1 arg.
@@ -163,15 +73,17 @@ void getArgv(int argc, char** argv, int* dayX, int* dayY, int dayCnt, int weekCn
     switch(argc)
     {
         case 1: //NO Arguments
+            mode = 0;
             *dayX = dayCnt - (dayCnt%7);    //Week's Start
             *dayY = dayCnt-1;               //TODAY
             printf("\nINIT : default (current week %d -> %d), for a certian period enter ./prog X to Y\n", *dayX, *dayY);
             break;
         case 2: // one argument
+            mode = 1;
             sscanf(argv[1],"%d", &numWeek);
-            if(numWeek > weekCnt)
+            if( (numWeek > weekCnt) || (numWeek <= 0)) 
             {
-                printf("ERROR: week number > available\n");
+                printf("ERROR: week number should be btw/ 1 -- weekCnt\n");
                 exit(0);
             }
             *dayX = (numWeek*7) - 7;    //Week's Start
@@ -180,6 +92,7 @@ void getArgv(int argc, char** argv, int* dayX, int* dayY, int dayCnt, int weekCn
             printf("\nINIT : WEEK %d - from day %d until %d\n", numWeek, *dayX, *dayY);
             break;
         case 3:
+            mode = 2;
             if(!strcmp(argv[1],"d")){
                 sscanf(argv[2],"%d", dayX);
                 *dayY = dayCnt - 1;
@@ -187,6 +100,7 @@ void getArgv(int argc, char** argv, int* dayX, int* dayY, int dayCnt, int weekCn
                 break;
             }
         default: // argc > 2
+            mode = 3;
             sscanf(argv[1],"%d", dayX);
             sscanf(argv[2],"%d", dayY);
             printf("\n init : computing the period from Day %d until %d\n", *dayX, *dayY);
@@ -215,7 +129,7 @@ void readFile(int** inTime, int** outTime, int** week, int* out_weekCnt, int* ou
     char buf[LINE_MAX];
     for(int i=0; i<WEEK_MAX; i++)
     {
-        week[i] = malloc(sizeof(int*) * 4); //one year
+        week[i] = malloc(sizeof(int*) * 4);
         for(int j=0;j<4;j++)
         {
             week[i][j]=0;
@@ -259,7 +173,6 @@ void calcWorkedSec(long long* _workedTime, int dayX, int dayY, int dayCnt, long 
     workedTime = *_workedTime;
     int today = dayCnt-1;
     int wday = today%7;
-    printf("wday:%d\n", wday);
     long long oneDay = 0;
 
 #ifdef DEBUG
@@ -299,164 +212,6 @@ void calcWorkedSec(long long* _workedTime, int dayX, int dayY, int dayCnt, long 
     *_workedTime = workedTime;
 }
 
-void calcNetWeekTime(int* _workedTime, int* _netWeekTime, int* totalWeekTime, int dayY)
-{
-    int N[3]   = {0};  
-    N[HR]      = _netWeekTime[HR];
-    N[MIN]     = _netWeekTime[MIN];
-    N[SEC]     = _netWeekTime[SEC];
-
-    N[SEC] = totalWeekTime[SEC] - _workedTime[SEC]; // -59 to 59
-    N[MIN] = totalWeekTime[MIN] - _workedTime[MIN]; // -59 to 59
-    N[HR] = totalWeekTime[HR] - _workedTime[HR];
-    adjTime(N);
-
-#ifdef DEBUG
-    printf("DEBUG; netTime(before min) \"%d:%d:%d\" \n", N[HR], N[MIN], N[SEC]);
-#endif
-
-    int remDays = 6 - (dayY%7);
-#ifdef DEBUG
-    printf("DEBUG; remDays %d\n", remDays);
-#endif
-    // make sure net remaining week time is above daily work minimum(8:30 to 14:30)
-    int minRemWeekTime = (remDays - 2) * 6;
-    if( N[HR] < minRemWeekTime)
-        N[HR] += minRemWeekTime;
-
-#ifdef DEBUG
-    printf("DEBUG; netTime(After min) \"%d:%d:%d\" \n", N[HR], N[MIN], N[SEC]);
-#endif
-    _netWeekTime[HR] = N[HR];
-    _netWeekTime[MIN] = N[MIN];
-    _netWeekTime[SEC] = N[SEC];
-}
-
-void calcRemDayTime(int* netWTime, int dayY, int* nowTime)
-{
-    int _maxRemDTime[3] = {0};  // remaining day time w/ 8:30-14:30 next days. (Short shift)
-    int _norRemDTime[3] = {0};  // remaining day time w/ 7:00-15:30 next days. (Normal shift)
-    int _minRemWeekTime[3] = {0};
-    int _norRemWeekTime[3] = {0};
-    int _remDays = 6 - (dayY%7);
-    int today = dayY%7;
-    if(_remDays > 2)
-    {
-        _minRemWeekTime[HR] = (_remDays - 2) * 6;
-        _norRemWeekTime[HR] = (_remDays - 2) * 8;
-        _norRemWeekTime[MIN] = (_remDays - 2) * 30;
-        while(_norRemWeekTime[MIN] > 59)
-        {
-            _norRemWeekTime[MIN] -= 60;
-            _norRemWeekTime[HR]++;
-        }
-    }
-
-    _maxRemDTime[SEC] = netWTime[SEC] - _minRemWeekTime[SEC]; // >=0
-    _maxRemDTime[MIN] = netWTime[MIN] - _minRemWeekTime[MIN]; // >=0
-    _maxRemDTime[HR] = netWTime[HR] - _minRemWeekTime[HR];    // >=0
-    checkOverflow(_maxRemDTime);
-    _norRemDTime[SEC] = netWTime[SEC] - _norRemWeekTime[SEC]; // >=0
-    _norRemDTime[MIN] = netWTime[MIN] - _norRemWeekTime[MIN]; // >=0
-    _norRemDTime[HR] = netWTime[HR] - _norRemWeekTime[HR];    // >=0
-    adjTime(_norRemDTime);
-    
-
-    printf("Maximum shift : %02d:%02d:%02d ", _maxRemDTime[HR], _maxRemDTime[MIN], _maxRemDTime[SEC]);
-    int _shLeaveTime[3] = {3};
-    _shLeaveTime[SEC] = nowTime[SEC] + _maxRemDTime[SEC]; // >=0
-    _shLeaveTime[MIN] = nowTime[MIN] + _maxRemDTime[MIN]; // >=0
-    _shLeaveTime[HR] = nowTime[HR] + _maxRemDTime[HR];    // >=0
-    checkOverflow(_shLeaveTime);
-    printf(" @ %02d:%02d:%02d\n", _shLeaveTime[HR], _shLeaveTime[MIN], _shLeaveTime[SEC]);
-    printf("[NORMAL] shift : %02d:%02d:%02d", _norRemDTime[HR], _norRemDTime[MIN], _norRemDTime[SEC]);
-    int _norLeaveTime[3] = {3};
-    _norLeaveTime[SEC] = nowTime[SEC] + _norRemDTime[SEC]; // >=0
-    _norLeaveTime[MIN] = nowTime[MIN] + _norRemDTime[MIN]; // >=0
-    _norLeaveTime[HR] = nowTime[HR] + _norRemDTime[HR];    // >=0
-    adjTime(_norLeaveTime);
-    printf(" @ %02d:%02d:%02d\n", _norLeaveTime[HR], _norLeaveTime[MIN], _norLeaveTime[SEC]);
-
-    print_shape1();
-    printf("\tSUMMARY\n");
-    if(today<4) // if berofr thursday
-         printf("to leave Thursday at 14:30, work today until %02d:%02d:%02d\n", _shLeaveTime[HR],
-                                                                                _shLeaveTime[MIN], 
-                                                                                _shLeaveTime[SEC]); 
-
-    else
-        printf("Remaining | %02d:%02d:%02d\n", netWTime[HR], netWTime[MIN], netWTime[SEC]);
-
-
-}
-
-// FIXME :: need more efficiency
-void offThursday(int* nowTime, int* netWTime, int dayY)
-{
-    int _bufTime[3] = {0};
-    _bufTime[SEC] = netWTime[SEC]; // >=0
-    _bufTime[MIN] = netWTime[MIN] - (30 - nowTime[MIN]); // >=0
-    _bufTime[HR] = netWTime[HR] - (14 - nowTime[HR]);    // >=0
-    int today = dayY%7;
-
-#ifdef DEBUG
-    printf("DEBUG: buf(before adj) -- %02d:%02d:%02d\n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);
-#endif
-    adjTime(_bufTime);
-#ifdef DEBUG
-    printf("DEBUG: buf(after adj) -- %02d:%02d:%02d\n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);
-#endif
-// 0 S, 1 M, 2 T, 3 W, 4 R, 5 F, 6 U
-    int _remDays = 6 - (dayY%7);
-    _bufTime[HR] -= (_remDays-2) * 6; 
-#ifdef DEBUG
-    printf("DEBUG: buf(before adj - nextDays inc) -- %02d:%02d:%02d\n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);
-#endif
-    adjTime(_bufTime);
-#ifdef DEBUG
-    printf("DEBUG: buf(after adj - nextDays inc) -- %02d:%02d:%02d\n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);
-#endif
-
-    int _shLeaveTime[3] = {0};
-    _shLeaveTime[SEC] = _bufTime[SEC]; // >=0
-    _shLeaveTime[MIN] = _bufTime[MIN] + 30;
-    _shLeaveTime[HR] = _bufTime[HR] + 14;
-
-    // -1:53:00
-    // 14:30:00
-    //
-    // 14:23:00
-    adjTime(_shLeaveTime);
-#ifdef DEBUG
-    printf("Short Shift --> offThursday @ %02d:%02d:%02d     ---- buf %02d:%02d:%02d\n", _shLeaveTime[HR], _shLeaveTime[MIN], _shLeaveTime[SEC],
-                                                                                         _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);  
-#endif
-    // buf - (1:00 + (_remDays - 3)*2:30:00 )
-    _bufTime[HR] -= 1 + (_remDays-3) * 2; // one hour (inst. 14:30 -> 15:30) + remDays ex/Thursday (8:30 hrs) shift.
-    _bufTime[MIN] -= (_remDays-3) * 30; // one hour (inst. 14:30 -> 15:30) + remDays ex/Thursday (8:30 hrs) shift.
-#ifdef DEBUG
-    printf("DEBUG: buf(before adj - nextDays inc) -- %02d:%02d:%02d\n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);
-#endif
-    adjTime(_bufTime);
-#ifdef DEBUG
-    printf("DEBUG: buf(after adj - nextDays inc) -- %02d:%02d:%02d\n", _bufTime[HR], _bufTime[MIN], _bufTime[SEC]);
-#endif
-
-    int _norLeaveTime[3] = {0};
-    _norLeaveTime[SEC] = _bufTime[SEC]; // >=0
-    _norLeaveTime[MIN] = _bufTime[MIN] + 30;
-    _norLeaveTime[HR] = _bufTime[HR] + 14;
-
-    adjTime(_norLeaveTime);
-#ifdef DEUBG
-    printf("Normal Shift --> offThursday @ %02d:%02d:%02d     ---- buf %02d:%02d:%02d\n", _norLeaveTime[HR], _norLeaveTime[MIN], _norLeaveTime[SEC],
-                                                                                         _bufTime[HR], _bufTime[MIN], _bufTime[SEC]); 
-#endif
-    
-    if(today<4) // if berofr thursday
-        printf("if you work today until 14:30, then you leave Thursday at %02d:%02d:%02d\n", _shLeaveTime[HR], _shLeaveTime[MIN], _shLeaveTime[SEC]); 
-}
-
 int calcTotalWeekSec(long long* _totalWeekTime)
 {
     long long temp = 0;
@@ -464,8 +219,6 @@ int calcTotalWeekSec(long long* _totalWeekTime)
            ( 60*(WEEK_WORK_REQ[MIN] + ( LUNCH_BREAK[MIN] * WORK_DAYS_PER_WEEK)) ) +
            ( 3600*( WEEK_WORK_REQ[HR] + ( LUNCH_BREAK[HR] * WORK_DAYS_PER_WEEK)) ) ;
 
-    printf("tmep %lld\nl", temp);
- 
     *_totalWeekTime = temp;
     return 0;
 }
@@ -501,18 +254,71 @@ int calcWeekRemSec(long long* _leftWeek, long long _totalWeekTime, long long _my
 
     return 0; 
 }
+int calcMinWeekRemSec(long long* _minLeftWeek, long long _totalWeekTime, long long _myTotalWeekTime, int dayCnt)
+{
+    long long minLeftWeek = 0;
+    int today = dayCnt-1;
+    int wday = today%7;
+    minLeftWeek = _totalWeekTime - _myTotalWeekTime;
+    if(wday < 4) //before thursday, make sure the leftWeek time > remaining days * minimum_daily_sec
+    {
+        if(minLeftWeek < (MIN_DAILY_TIME*(4-wday)) )
+            minLeftWeek += ( (MIN_DAILY_TIME*(4-wday)) - minLeftWeek);
+    }
+
+    *_minLeftWeek = minLeftWeek;
+    return 0; 
+}
+int calcLeaveToday(long long* _norLeaveToday, long long* _shLeaveToday, long long _minWeekLeft, int dayCnt)
+{
+    long long norLeaveToday = 0;
+    long long shLeaveToday = 0;
+    int today = dayCnt-1;
+    int wday = today%7;
+
+    norLeaveToday = _minWeekLeft - ( (4-wday) * (NORMAL_DAILY_TIME) ); // min week left - normal hrs
+    shLeaveToday = _minWeekLeft - ( (4-wday) * (MIN_DAILY_TIME) ); // min week left - normal hrs
+
+    *_norLeaveToday = norLeaveToday;
+    *_shLeaveToday = shLeaveToday;
+    return 0; 
+}
+
+// TODO: if i leave at xx:xx:xx
+int calcOffThursday(long long* _norLeaveThur, long long* _shLeaveThur, long long* _norNowLeaveThur,long long* _shNowLeaveThur, long long _minWeekLeft, long long _nowSec, int dayCnt)
+{
+    long long norLeaveThur = 0;
+    long long shLeaveThur = 0;
+    long long norNowLeaveThur = 0; 
+    long long shNowLeaveThur = 0; 
+    int today = dayCnt-1;
+    int wday = today%7;
+    long long restNor = (3-wday) * (NORMAL_DAILY_TIME); // rest days ex/Thursday
+    long long restSh = (3-wday) * (MIN_DAILY_TIME);
+
+    long long norOut = (15*(60*60)) + (30*60);
+    long long shOut = (14*(60*60)) + (30*60); 
+
+    norLeaveThur = _minWeekLeft - (norOut - _nowSec) - restNor ; 
+    shLeaveThur = _minWeekLeft - (shOut - _nowSec) - restSh ; 
+    norNowLeaveThur = _minWeekLeft - restNor;
+    shNowLeaveThur = _minWeekLeft - restSh;
+
+    *_norLeaveThur = norLeaveThur;
+    *_shLeaveThur = shLeaveThur;
+    *_norNowLeaveThur = norNowLeaveThur;
+    *_shNowLeaveThur = shNowLeaveThur;
+    return 0; 
+}
 
 int main(int argc, char** argv)
 {
+
+
     int dayY = 0;
     int dayX = 0;
     int weekCnt = 0;
     int dayCnt  = 0;
-    int workedTime[3] = {0};
-    long long worked_sec = 0; 
-
-    int _netWeekTime[3] = {0};
-    long long net_week_sec = 0; 
 
     int nowTime[4] = {0};
     long long now_sec = 0; 
@@ -529,6 +335,19 @@ int main(int argc, char** argv)
     long long my_week_sec = 0;
     int leftWeek[3] = {0};
     long long left_week_sec = 0;
+    int minLeftWeek[3] = {0};
+    long long min_left_week_sec = 0;
+    int shLeaveToday[3] = {0};
+    long long sh_leave_today = 0;
+    int norLeaveToday[3] = {0};
+    long long nor_leave_today = 0;
+    int norLeaveThur[3] = {0};
+    long long nor_leave_thur = 0;
+    int shLeaveThur[3] = {0};
+    long long sh_leave_thur = 0;
+    int nowLeaveThur[3] = {0};
+    long long nor_now_leave_thur = 0;
+    long long sh_now_leave_thur = 0;
 
 // *******    TIME    ******* //
     time_t rawtime;
@@ -543,15 +362,12 @@ int main(int argc, char** argv)
     printf ("Today is %s", asctime(timeinfo));
     convert_to_sec(nowTime, &now_sec);
     convert_from_sec(nowTime, now_sec);
-    printf ("in seconds %lld\n", now_sec);
-    printf ("back to %02d:%02d:%02d \n", nowTime[HR], nowTime[MIN], nowTime[SEC]);
+
 //--------------------------------------------
     calcTotalWeekSec(&total_week_sec);
-    printf ("total_week seconds %lld\n", total_week_sec);
     convert_from_sec(totalWeekTime, total_week_sec);
     printf(" -- Total work hours per week : %02d:%02d:%02d\n", totalWeekTime[HR], totalWeekTime[MIN], totalWeekTime[SEC]); 
     avgSec(total_week_sec, WORK_DAYS_PER_WEEK, &daily_avg_sec);
-    printf(" -- Supposed daily average: %lld sec\n", daily_avg_sec);
     convert_from_sec(dailyAvg, daily_avg_sec);
     printf(" -- Supposed daily average: %d:%d:%d\n", dailyAvg[HR], dailyAvg[MIN], dailyAvg[SEC]);
 
@@ -575,9 +391,9 @@ int main(int argc, char** argv)
     }
 
     readFile( inTime, outTime, week, &weekCnt, &dayCnt);
-#ifdef DEBUG 
+//#ifdef DEBUG 
     printf("weekCnt=%d\tdayCnt=%d\n", weekCnt, dayCnt);
-#endif
+//#endif
     for(int i=0; i<dayCnt; i++)
     { 
         convert_to_sec(inTime[i], &inSec[i]);
@@ -603,14 +419,43 @@ int main(int argc, char** argv)
     calcWeekRemSec(&left_week_sec, total_week_sec, my_week_sec);
     convert_from_sec(leftWeek, left_week_sec);
     printf(" -- Left in the week: %02d:%02d:%02d\n", leftWeek[HR], leftWeek[MIN], leftWeek[SEC]);
-/*
+    if(mode == 0){
+        int today = dayY;
+        calcMinWeekRemSec(&min_left_week_sec, total_week_sec, my_week_sec, dayCnt);
+        convert_from_sec(minLeftWeek, min_left_week_sec);
+        printf(" -- Minimum Left in the week: %02d:%02d:%02d\n", minLeftWeek[HR], minLeftWeek[MIN], minLeftWeek[SEC]);
 
-    calcNetWeekTime(workedTime, _netWeekTime, totalWeekTime, dayY);
-    printf("\n");
-    calcRemDayTime(_netWeekTime, dayY, nowTime);
-    offThursday(nowTime, _netWeekTime, dayY);
+        calcLeaveToday( &nor_leave_today, &sh_leave_today, min_left_week_sec, dayCnt);
+        printf("NORAMAL days:\n\t");
+        convert_from_sec(norLeaveToday, nor_leave_today);
+        printf(" -- %02d:%02d:%02d", norLeaveToday[HR], norLeaveToday[MIN], norLeaveToday[SEC]);
+        convert_from_sec(norLeaveToday, nor_leave_today+now_sec);
+        printf(" @ %02d:%02d:%02d\n", norLeaveToday[HR], norLeaveToday[MIN], norLeaveToday[SEC]);
+        printf("SHORT days:\n\t");
+        convert_from_sec(shLeaveToday, sh_leave_today);
+        printf(" -- %02d:%02d:%02d", shLeaveToday[HR], shLeaveToday[MIN], shLeaveToday[SEC]);
+        convert_from_sec(shLeaveToday, sh_leave_today+now_sec);
+        printf(" @ %02d:%02d:%02d\n", shLeaveToday[HR], shLeaveToday[MIN], shLeaveToday[SEC]);
 
-*/
+        
+        long long inNor = (7*(60*60)); // in at 7:00
+        long long inSh = (8*(60*60)) + (30*60); //in at 8:30 
+        calcOffThursday(&nor_leave_thur, &sh_leave_thur, &nor_now_leave_thur, &sh_now_leave_thur,  min_left_week_sec, now_sec, dayCnt);
+
+        convert_from_sec(norLeaveThur, nor_leave_thur+inNor);
+        printf("out today @ 15:30 (restNor)-> leave Thur @ %02d:%02d:%02d\n", norLeaveThur[HR], norLeaveThur[MIN], norLeaveThur[SEC]);
+        convert_from_sec(shLeaveThur, sh_leave_thur+inSh);
+        printf("out today @ 14:30 (restSh) -> leave Thur @ %02d:%02d:%02d\n", shLeaveThur[HR], shLeaveThur[MIN], shLeaveThur[SEC]);
+
+        convert_from_sec(nowLeaveThur, nor_now_leave_thur+inNor);
+        printf("out NOW(restNor, inNor) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
+        convert_from_sec(nowLeaveThur, nor_now_leave_thur+inSh);
+        printf("out NOW(restNor, inSh) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
+        convert_from_sec(nowLeaveThur, sh_now_leave_thur+inNor);
+        printf("out NOW(restSh, inNor) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
+        convert_from_sec(nowLeaveThur, sh_now_leave_thur+inSh);
+        printf("out NOW(restSh, inSh) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
+    }
 
     for(int i=0; i<(7*WEEK_MAX); i++)
     {
