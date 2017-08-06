@@ -11,6 +11,8 @@
 #include <string.h>
 #include <time.h>
 #include "ansiiColor.h"
+#include "calc.h"
+
 void print_shape1()
 {
     for (int n = 21, i = -n / 2; i < n / 2 + 1; i++)
@@ -23,39 +25,8 @@ void print_shape1()
 //#define FILENAME "randomWeekG/randomWeek"
 #endif
 
-#define LINE_MAX 50
-#define WEEK_MAX 52
-#define WEEK_NUM 1 
-const int LUNCH_BREAK[3] = {0,30, 0};
-const int WEEK_WORK_REQ[3] = {40, 0, 0};
-const int WORK_DAYS_PER_WEEK = 5;
-const long long MIN_DAILY_TIME = (60*60)*(6); //6 hr minimum daily from 8:30 to 14:30
-const long long NORMAL_DAILY_TIME = ( ( (60*60)*(8) ) + (60 * 30) );//8:30 nor day | 7:00 to 15:30
 
-#define NORMAL_SH   0 //in 7:00 out 15:30
-#define SHORT_SH    1 //in 8:30 out 14:30
-//
-// modes:
-//      0 - Last week   
-//      1 - specefic week 
-//
-
-enum time{HR, MIN, SEC, DAY};
 enum days{Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday};
-int convert_from_sec(int* n, long long s)
-{
-    long long temp = s;
-    n[HR] = (temp/3600);
-    temp = (temp%3600);
-    n[MIN] = temp/60; 
-    n[SEC] = temp%60;
-return 0;
-}
-int convert_to_sec(int* n, long long* s)
-{
-    *s = n[SEC] + 60*n[MIN] + 3600*n[HR]; 
-return 0; 
-}
 
 int mode = 0;
 // 4 cases:
@@ -81,7 +52,7 @@ void getArgv(int argc, char** argv, int* dayX, int* dayY, int dayCnt, int weekCn
         case 2: // one argument
             mode = 1;
             sscanf(argv[1],"%d", &numWeek);
-            if( (numWeek > weekCnt) || (numWeek <= 0)) 
+            if( (numWeek >= weekCnt) || (numWeek <= 0)) 
             {
                 printf("ERROR: week number should be btw/ 1 -- weekCnt\n");
                 exit(0);
@@ -105,14 +76,6 @@ void getArgv(int argc, char** argv, int* dayX, int* dayY, int dayCnt, int weekCn
             sscanf(argv[2],"%d", dayY);
             printf("\n init : computing the period from Day %d until %d\n", *dayX, *dayY);
             break;
-    }
-}
-
-//TODO:
-void _print_readFile(int* inTime, int* outTime, int* week, int weekCnt, int dayCnt){
-
-    for(int i=0; i<dayCnt; i++)
-    {
     }
 }
 
@@ -164,151 +127,6 @@ void readFile(int** inTime, int** outTime, int** week, int* out_weekCnt, int* ou
 
     *out_weekCnt = weekCnt;
     *out_dayCnt = dayCnt;
-}
-
-
-void calcWorkedSec(long long* _workedTime, int dayX, int dayY, int dayCnt, long long* _inSec, long long* _outSec, long long _nowSec)
-{
-    long long workedTime = 0;
-    workedTime = *_workedTime;
-    int today = dayCnt-1;
-    int wday = today%7;
-    long long oneDay = 0;
-
-#ifdef DEBUG
-    int oneDay_v[3] = {0};
-// print the period's log
-    for(int i=dayX; i<=dayY; i++)
-        printf("%03d IN- %lldd OUT- %lld\n", i, _inSec[i], _outSec[i]);
-#endif
-    for(int i=dayX; i<=dayY; i++)
-    {
-        if( (i==dayY) && (dayY==today) && (_outSec[i]==0)) //if dayY is Today
-        {
-            workedTime += _nowSec - _inSec[i]; // -59 to 59
-            oneDay = _nowSec - _inSec[i]; // -59 to 59
-
-#ifdef DEBUG
-    convert_from_sec(oneDay_v, oneDay);
-    printf("DEBUG: TODAY[%d] worked %02d:%02d:%02d\n", i, oneDay_v[HR], oneDay_v[MIN], oneDay_v[SEC]);
-    printf("DEBUG: nowTime %lld \n", _nowSec);
-#endif
-        }
-        else
-        {
-            workedTime += _outSec[i] - _inSec[i]; // -59 to 59
-            oneDay = _outSec[i] - _inSec[i]; // -59 to 59
-        }
-
-#ifdef DEBUG
-    int worked_temp[3] = {0};
-    convert_from_sec(oneDay_v, oneDay);
-    convert_from_sec(worked_temp, workedTime);
-    printf("DEBUG: day[%d] worked %02d:%02d:%02d\n", i, oneDay_v[HR], oneDay_v[MIN], oneDay_v[SEC]);
-    printf("DEBUG: day[%d] worked %02d:%02d:%02d so far\n", i, worked_temp[HR], worked_temp[MIN], worked_temp[SEC]);
-#endif
-       } 
-
-    *_workedTime = workedTime;
-}
-
-int calcTotalWeekSec(long long* _totalWeekTime)
-{
-    long long temp = 0;
-    temp = ( WEEK_WORK_REQ[SEC] + ( LUNCH_BREAK[SEC] * WORK_DAYS_PER_WEEK) ) + 
-           ( 60*(WEEK_WORK_REQ[MIN] + ( LUNCH_BREAK[MIN] * WORK_DAYS_PER_WEEK)) ) +
-           ( 3600*( WEEK_WORK_REQ[HR] + ( LUNCH_BREAK[HR] * WORK_DAYS_PER_WEEK)) ) ;
-
-    *_totalWeekTime = temp;
-    return 0;
-}
-int avgSec(long long _data, int numDays, long long* _avg)
-{
-    long long temp = 0;
-    temp = _data/numDays;
-
-    *_avg = temp;
-    return 0;
-}
-
-int calcTotalSec(long long* _result, long long _avg, int _period)
-{
-    long long temp = 0;
-    int workDays = (_period - ( ((_period/5)-1) *2) );
-    temp = _avg * workDays;
-
-#ifdef DEBUG
-    printf("DEBUG -- %lld  || period: %d days\n", temp, workDays);
-#endif
-
-    *_result = temp;
-
-    return 0;
-}
-
-int calcWeekRemSec(long long* _leftWeek, long long _totalWeekTime, long long _myTotalWeekTime)
-{
-    long long leftWeek = 0;
-    leftWeek = _totalWeekTime - _myTotalWeekTime;
-    *_leftWeek = leftWeek;
-
-    return 0; 
-}
-int calcMinWeekRemSec(long long* _minLeftWeek, long long _totalWeekTime, long long _myTotalWeekTime, int dayCnt)
-{
-    long long minLeftWeek = 0;
-    int today = dayCnt-1;
-    int wday = today%7;
-    minLeftWeek = _totalWeekTime - _myTotalWeekTime;
-    if(wday < 4) //before thursday, make sure the leftWeek time > remaining days * minimum_daily_sec
-    {
-        if(minLeftWeek < (MIN_DAILY_TIME*(4-wday)) )
-            minLeftWeek += ( (MIN_DAILY_TIME*(4-wday)) - minLeftWeek);
-    }
-
-    *_minLeftWeek = minLeftWeek;
-    return 0; 
-}
-int calcLeaveToday(long long* _norLeaveToday, long long* _shLeaveToday, long long _minWeekLeft, int dayCnt)
-{
-    long long norLeaveToday = 0;
-    long long shLeaveToday = 0;
-    int today = dayCnt-1;
-    int wday = today%7;
-
-    norLeaveToday = _minWeekLeft - ( (4-wday) * (NORMAL_DAILY_TIME) ); // min week left - normal hrs
-    shLeaveToday = _minWeekLeft - ( (4-wday) * (MIN_DAILY_TIME) ); // min week left - normal hrs
-
-    *_norLeaveToday = norLeaveToday;
-    *_shLeaveToday = shLeaveToday;
-    return 0; 
-}
-
-// TODO: if i leave at xx:xx:xx
-int calcOffThursday(long long* _norLeaveThur, long long* _shLeaveThur, long long* _norNowLeaveThur,long long* _shNowLeaveThur, long long _minWeekLeft, long long _nowSec, int dayCnt)
-{
-    long long norLeaveThur = 0;
-    long long shLeaveThur = 0;
-    long long norNowLeaveThur = 0; 
-    long long shNowLeaveThur = 0; 
-    int today = dayCnt-1;
-    int wday = today%7;
-    long long restNor = (3-wday) * (NORMAL_DAILY_TIME); // rest days ex/Thursday
-    long long restSh = (3-wday) * (MIN_DAILY_TIME);
-
-    long long norOut = (15*(60*60)) + (30*60);
-    long long shOut = (14*(60*60)) + (30*60); 
-
-    norLeaveThur = _minWeekLeft - (norOut - _nowSec) - restNor ; 
-    shLeaveThur = _minWeekLeft - (shOut - _nowSec) - restSh ; 
-    norNowLeaveThur = _minWeekLeft - restNor;
-    shNowLeaveThur = _minWeekLeft - restSh;
-
-    *_norLeaveThur = norLeaveThur;
-    *_shLeaveThur = shLeaveThur;
-    *_norNowLeaveThur = norNowLeaveThur;
-    *_shNowLeaveThur = shNowLeaveThur;
-    return 0; 
 }
 
 int main(int argc, char** argv)
@@ -366,10 +184,10 @@ int main(int argc, char** argv)
 //--------------------------------------------
     calcTotalWeekSec(&total_week_sec);
     convert_from_sec(totalWeekTime, total_week_sec);
-    printf(" -- Total work hours per week : %02d:%02d:%02d\n", totalWeekTime[HR], totalWeekTime[MIN], totalWeekTime[SEC]); 
+//    printf(" -- Total work hours per week : %02d:%02d:%02d\n", totalWeekTime[HR], totalWeekTime[MIN], totalWeekTime[SEC]);
     avgSec(total_week_sec, WORK_DAYS_PER_WEEK, &daily_avg_sec);
     convert_from_sec(dailyAvg, daily_avg_sec);
-    printf(" -- Supposed daily average: %d:%d:%d\n", dailyAvg[HR], dailyAvg[MIN], dailyAvg[SEC]);
+//    printf(" -- Supposed daily average: %d:%d:%d\n", dailyAvg[HR], dailyAvg[MIN], dailyAvg[SEC]);
 
 // *******    READ_FILe    ******* //
     int** week; //month, day, year
@@ -391,14 +209,12 @@ int main(int argc, char** argv)
     }
 
     readFile( inTime, outTime, week, &weekCnt, &dayCnt);
-//#ifdef DEBUG 
     printf("weekCnt=%d\tdayCnt=%d\n", weekCnt, dayCnt);
-//#endif
+
     for(int i=0; i<dayCnt; i++)
     { 
         convert_to_sec(inTime[i], &inSec[i]);
         convert_to_sec(outTime[i], &outSec[i]);
-        //printf(" -- day[%d]: IN %lld sec ----  OUT %lld\n", i, inSec[i], outSec[i]);
     }
 
     calcTotalSec(&total_sec, daily_avg_sec, dayCnt-1);
