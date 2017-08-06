@@ -18,4 +18,4 @@ int calcTotalSec(long long* _result, long long _avg, int _period);
 int calcWeekRemSec(long long* _leftWeek, long long _totalWeekTime, long long _myTotalWeekTime);
 int calcMinWeekRemSec(long long* _minLeftWeek, long long _totalWeekTime, long long _myTotalWeekTime, int dayCnt);
 int calcLeaveToday(long long* _norLeaveToday, long long* _shLeaveToday, long long _minWeekLeft, int dayCnt);
-int calcOffThursday(long long* _norLeaveThur, long long* _shLeaveThur, long long* _norNowLeaveThur,long long* _shNowLeaveThur, long long _minWeekLeft, long long _nowSec, int dayCnt);
+int calcOffThursday(long long* _norLeaveThur, long long* _shLeaveThur, long long* _norNowLeaveThur, long long* _shNowLeaveThur,long long* _shThurRestNor,  long long _minWeekLeft, long long _nowSec, int dayCnt);

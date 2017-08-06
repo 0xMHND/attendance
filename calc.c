@@ -138,10 +138,11 @@ int calcLeaveToday(long long* _norLeaveToday, long long* _shLeaveToday, long lon
 }
 
 // TODO: if i leave at xx:xx:xx
-int calcOffThursday(long long* _norLeaveThur, long long* _shLeaveThur, long long* _norNowLeaveThur,long long* _shNowLeaveThur, long long _minWeekLeft, long long _nowSec, int dayCnt)
+int calcOffThursday(long long* _norLeaveThur, long long* _shLeaveThur, long long* _norNowLeaveThur,long long* _shNowLeaveThur,long long* _shThurRestNor, long long _minWeekLeft, long long _nowSec, int dayCnt)
 {
     long long norLeaveThur = 0;
     long long shLeaveThur = 0;
+    long long shThurRestNor = 0;
     long long norNowLeaveThur = 0; 
     long long shNowLeaveThur = 0; 
     int today = dayCnt-1;
@@ -152,6 +153,7 @@ int calcOffThursday(long long* _norLeaveThur, long long* _shLeaveThur, long long
     long long norOut = (15*(60*60)) + (30*60);
     long long shOut = (14*(60*60)) + (30*60); 
 
+    shThurRestNor = _minWeekLeft - (MIN_DAILY_TIME) - ((3-wday) * NORMAL_DAILY_TIME);
     norLeaveThur = _minWeekLeft - (norOut - _nowSec) - restNor ; 
     shLeaveThur = _minWeekLeft - (shOut - _nowSec) - restSh ; 
     norNowLeaveThur = _minWeekLeft - restNor;
@@ -161,6 +163,19 @@ int calcOffThursday(long long* _norLeaveThur, long long* _shLeaveThur, long long
     *_shLeaveThur = shLeaveThur;
     *_norNowLeaveThur = norNowLeaveThur;
     *_shNowLeaveThur = shNowLeaveThur;
+    *_shThurRestNor = shThurRestNor;
+
+
+
+#ifdef DEBUG
+    int temp[3] = {0};
+    int temp1[3] = {0};
+    int temp2[3] = {0};
+    convert_from_sec(temp, _minWeekLeft);
+    convert_from_sec(temp1, MIN_DAILY_TIME);
+    convert_from_sec(temp2, NORMAL_DAILY_TIME);
+    printf("shThurRestNor = %02d:%02d:%02d - %02d:%02d:%02d - (%d * %02d:%02d:%02d)\n", temp[HR], temp[MIN], temp[SEC], temp1[HR], temp1[MIN], temp1[SEC], 2-wday, temp2[HR], temp2[MIN], temp2[SEC]); 
+#endif
     return 0; 
 }
 
