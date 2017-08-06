@@ -24,6 +24,28 @@ void print_shape1()
 
 int mode = 0;
 
+void drawToday( int period, int start, int end, int target)
+{
+    /*
+    long long since_6am = _nowSec - (6*60*60);
+    int minutes = since_6am/(60);
+    int half_hrs = since_6am/30;
+    */
+
+printf("]");
+    for(int i=0; i<period; i++)
+    {
+        if( (i>start) && (i<end) )
+            printf(ANSI_COLOR_RED"-"ANSI_COLOR_RESET);
+        else
+            printf(ANSI_COLOR_LIGHTCYAN"-"ANSI_COLOR_RESET);
+
+        if( i==target )
+            printf(ANSI_COLOR_YELLOWBLUE"-"ANSI_COLOR_RESET);
+    }
+printf("[\n");
+
+} 
 int main(int argc, char** argv)
 {
     int dayY = 0;
@@ -164,6 +186,7 @@ int main(int argc, char** argv)
 
     print_shape1();
     printf("       SUMMARY\n");
+    drawToday(48, 15, 32, 33);
 #ifdef VERBOSE
     printf("weekCnt=%d\tdayCnt=%d\n", weekCnt, dayCnt);
     printf(" -- Total work hours per week : %02d:%02d:%02d\n", totalWeekTime[HR], totalWeekTime[MIN], totalWeekTime[SEC]);
