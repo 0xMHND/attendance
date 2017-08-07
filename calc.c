@@ -34,7 +34,6 @@ void calcWorkedSec(long long* _workedTime, int dayX, int dayY, int dayCnt, long 
     long long workedTime = 0;
     workedTime = *_workedTime;
     int today = dayCnt-1;
-    int wday = today%7;
     long long oneDay = 0;
 
 #ifdef DEBUG
