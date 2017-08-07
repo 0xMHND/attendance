@@ -178,10 +178,11 @@ int main(int argc, char** argv)
 
     print_shape1();
     printf("       SUMMARY\n");
-    int period = NORMAL_DAILY_TIME/(60*10); //halfhours
+    int possible_time = (17-6) * (60*60); //from 6am to 5pm
+    int period = possible_time/(60*10); //halfhours
     int start = (inSec[dayY] / (60*10) ) - (7*60/10) ; // in time - nor in time  
     int end = (now_sec/(60*10)) - (7*60/10);
-    int target = (nor_leave_today/(60*10));
+    int target = ((8*3600 + 30*60)/(60*10));
     drawToday(period, start, end, target);
 
 #ifdef VERBOSE
