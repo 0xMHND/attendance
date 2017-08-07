@@ -161,19 +161,24 @@ int main(int argc, char** argv)
 
         convert_from_sec(shThurRestNor, sh_thur_rest_nor+now_sec);
         printf("To leave @ Thur 14:30 -> leave today @ %02d:%02d:%02d (restNor)\n", shThurRestNor[HR], shThurRestNor[MIN], shThurRestNor[SEC]);
+        /*
         convert_from_sec(norLeaveThur, nor_leave_thur+inNor);
         printf("out today @ 15:30 (restNor)-> leave Thur @ %02d:%02d:%02d\n", norLeaveThur[HR], norLeaveThur[MIN], norLeaveThur[SEC]);
         convert_from_sec(shLeaveThur, sh_leave_thur+inSh);
         printf("out today @ 14:30 (restSh) -> leave Thur @ %02d:%02d:%02d\n", shLeaveThur[HR], shLeaveThur[MIN], shLeaveThur[SEC]);
+        */
 
-        convert_from_sec(nowLeaveThur, nor_now_leave_thur+inNor);
-        printf("out NOW(restNor, inNor) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
-        convert_from_sec(nowLeaveThur, nor_now_leave_thur+inSh);
-        printf("out NOW(restNor, inSh) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
-        convert_from_sec(nowLeaveThur, sh_now_leave_thur+inNor);
-        printf("out NOW(restSh, inNor) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
-        convert_from_sec(nowLeaveThur, sh_now_leave_thur+inSh);
-        printf("out NOW(restSh, inSh) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
+        if(now_sec>(14*3600+30*60))
+        {
+            convert_from_sec(nowLeaveThur, nor_now_leave_thur+inNor);
+            printf("out NOW(restNor, inNor) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
+            convert_from_sec(nowLeaveThur, nor_now_leave_thur+inSh);
+            printf("out NOW(restNor, inSh) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
+            convert_from_sec(nowLeaveThur, sh_now_leave_thur+inNor);
+            printf("out NOW(restSh, inNor) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
+            convert_from_sec(nowLeaveThur, sh_now_leave_thur+inSh);
+            printf("out NOW(restSh, inSh) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
+        }
     }
 
     print_shape1();
