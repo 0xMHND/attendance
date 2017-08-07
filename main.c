@@ -142,6 +142,11 @@ int main(int argc, char** argv)
         calcMinWeekRemSec(&min_left_week_sec, total_week_sec, my_week_sec, dayCnt);
         convert_from_sec(minLeftWeek, min_left_week_sec);
         printf(" -- Minimum Left in the week: %02d:%02d:%02d\n", minLeftWeek[HR], minLeftWeek[MIN], minLeftWeek[SEC]);
+        int avgLeft[3] = {0};
+        long long avg_left=0;
+        avgSec(min_left_week_sec, 4-(dayY%7), &avg_left);
+        convert_from_sec(avgLeft, avg_left);
+        printf(" -- %d avg left: %02d:%02d:%02d\n", 4-(dayY%7), avgLeft[HR], avgLeft[MIN], avgLeft[SEC]);
 
         calcLeaveToday( &nor_leave_today, &sh_leave_today, min_left_week_sec, dayCnt);
         printf("NORAMAL days:\n\t");
@@ -154,6 +159,14 @@ int main(int argc, char** argv)
         printf(" -- %02d:%02d:%02d", shLeaveToday[HR], shLeaveToday[MIN], shLeaveToday[SEC]);
         convert_from_sec(shLeaveToday, sh_leave_today+now_sec);
         printf(" @ %02d:%02d:%02d\n", shLeaveToday[HR], shLeaveToday[MIN], shLeaveToday[SEC]);
+
+//    int possible_time = (17-6) * (60*60); //from 6am to 5pm
+    int possible_time = (24) * (60*60); //from 6am to 5pm
+    int period = possible_time/(60*10); //halfhours
+    int start = (inSec[dayY] / (60*10) ) - (7*60/10) ; // in time - nor in time  
+    int end = (now_sec/(60*10)) - (7*60/10);
+    int target = ((nor_leave_today+now_sec)/(60*10)) - (7*60/10);
+    drawToday(period, start, end, target);
 
         long long inNor = (7*(60*60)); // in at 7:00
         long long inSh = (8*(60*60)) + (30*60); //in at 8:30 
@@ -183,12 +196,6 @@ int main(int argc, char** argv)
 
     print_shape1();
     printf("       SUMMARY\n");
-    int possible_time = (17-6) * (60*60); //from 6am to 5pm
-    int period = possible_time/(60*10); //halfhours
-    int start = (inSec[dayY] / (60*10) ) - (7*60/10) ; // in time - nor in time  
-    int end = (now_sec/(60*10)) - (7*60/10);
-    int target = ((8*3600 + 30*60)/(60*10));
-    drawToday(period, start, end, target);
 
 #ifdef VERBOSE
     printf("weekCnt=%d\tdayCnt=%d\n", weekCnt, dayCnt);
