@@ -36,6 +36,8 @@ printf("]");
             printf(ANSI_COLOR_LIGHTCYAN"-"ANSI_COLOR_RESET);
         if( i==target )
             printf(ANSI_COLOR_REVERSE"-"ANSI_COLOR_RESET);
+        if( i==(17*6) )
+            printf(ANSI_COLOR_YELLOWBLUE"-"ANSI_COLOR_RESET);
     }
 printf("[\n");
 } 
@@ -165,7 +167,7 @@ int main(int argc, char** argv)
     int period = possible_time/(60*10); //halfhours
     int start = (inSec[dayY] / (60*10) ) - (7*60/10) ; // in time - nor in time  
     int end = (now_sec/(60*10)) - (7*60/10);
-    int target = ((nor_leave_today+now_sec)/(60*10)) - (7*60/10);
+    int target = ((nor_leave_today+now_sec)/(60*10)) - (7*60/10); //when i leave if i work normal day(8:30) 
     drawToday(period, start, end, target);
 
         long long inNor = (7*(60*60)); // in at 7:00
