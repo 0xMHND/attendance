@@ -11,6 +11,7 @@
 #include <time.h>
 #include "ansiiColor.h"
 #include "calc.h"
+#include "plot.h"
 
 #define FILENAME "attendance"
 
@@ -146,7 +147,6 @@ int main(int argc, char** argv)
         printf(" -- Minimum Left in the week: %02d:%02d:%02d\n", minLeftWeek[HR], minLeftWeek[MIN], minLeftWeek[SEC]);
         int avgLeft[3] = {0};
         long long avg_left=0;
-        printf("%d\n", 4-(dayY%7));
         avgSec(min_left_week_sec, 4-(dayY%7), &avg_left);
         convert_from_sec(avgLeft, avg_left);
         printf(" -- %d avg left: %02d:%02d:%02d\n", 4-(dayY%7), avgLeft[HR], avgLeft[MIN], avgLeft[SEC]);
@@ -209,6 +209,18 @@ int main(int argc, char** argv)
     printf(" -- my week work time until today: %02d:%02d:%02d\n", myWeekTime[HR], myWeekTime[MIN], myWeekTime[SEC]);
     printf(" -- Left in the week: %02d:%02d:%02d\n", leftWeek[HR], leftWeek[MIN], leftWeek[SEC]);
 #endif
+
+
+    printf("intTime size %d\n", dayCnt);
+    uint64_t xvals[dayCnt];
+    uint64_t yvals[dayCnt];
+    for(int i=0; i<dayCnt; i++)
+    {
+        yvals[i] = inSec[i];
+        xvals[i] = i+1;
+    }
+    plot_data(xvals, yvals,dayCnt);
+
     for(int i=0; i<(7*WEEK_MAX); i++)
     {
         free(inTime[i]);
