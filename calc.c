@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "calc.h"
 
 const int LUNCH_BREAK[3] = {0,30, 0};
@@ -24,7 +25,10 @@ return 0;
 int avgSec(long long _data, int numDays, long long* _avg)
 {
     long long temp = 0;
-    temp = _data/numDays;
+    if(numDays!=0)
+        temp = _data/numDays;
+    else
+        temp = _data;
 
     *_avg = temp;
     return 0;
