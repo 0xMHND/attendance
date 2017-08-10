@@ -14,6 +14,7 @@
 #include "plot.h"
 
 #define FILENAME "attendance"
+#define THURSDAY 4
 
 void getArgv(int argc, char** argv, int* dayX, int* dayY, int dayCnt, int weekCnt);
 void readFile(int** inTime, int** outTime, int** week, int* out_weekCnt, int* out_dayCnt);
@@ -44,6 +45,7 @@ printf("[\n");
 } 
 int main(int argc, char** argv)
 {
+    int today = 0;
     int dayY = 0;
     int dayX = 0;
     int weekCnt = 0;
@@ -120,6 +122,7 @@ int main(int argc, char** argv)
     }
 
     readFile( inTime, outTime, week, &weekCnt, &dayCnt);
+    today = dayCnt%7;
 
     for(int i=0; i<dayCnt; i++)
     { 
@@ -171,34 +174,38 @@ int main(int argc, char** argv)
     int target = ((nor_leave_today+now_sec)/(60*10)) - (7*60/10); //when i leave if i work normal day(8:30) 
     drawToday(period, start, end, target);
 
-        long long inNor = (7*(60*60)); // in at 7:00
-        long long inSh = (8*(60*60)) + (30*60); //in at 8:30 
-        calcOffThursday(&nor_leave_thur, &sh_leave_thur, &nor_now_leave_thur, &sh_now_leave_thur, &sh_thur_rest_nor, min_left_week_sec, now_sec, dayCnt);
-
-        convert_from_sec(shThurRestNor, sh_thur_rest_nor+now_sec);
-        printf("To leave @ Thur 14:30 -> leave today @ %02d:%02d:%02d (restNor)\n", shThurRestNor[HR], shThurRestNor[MIN], shThurRestNor[SEC]);
-        /*
-        convert_from_sec(norLeaveThur, nor_leave_thur+inNor);
-        printf("out today @ 15:30 (restNor)-> leave Thur @ %02d:%02d:%02d\n", norLeaveThur[HR], norLeaveThur[MIN], norLeaveThur[SEC]);
-        convert_from_sec(shLeaveThur, sh_leave_thur+inSh);
-        printf("out today @ 14:30 (restSh) -> leave Thur @ %02d:%02d:%02d\n", shLeaveThur[HR], shLeaveThur[MIN], shLeaveThur[SEC]);
-        */
-
-        if(now_sec>(14*3600+30*60))
+        if(today < THURSDAY)
         {
-            convert_from_sec(nowLeaveThur, nor_now_leave_thur+inNor);
-            printf("out NOW(restNor, inNor) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
-            convert_from_sec(nowLeaveThur, nor_now_leave_thur+inSh);
-            printf("out NOW(restNor, inSh) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
-            convert_from_sec(nowLeaveThur, sh_now_leave_thur+inNor);
-            printf("out NOW(restSh, inNor) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
-            convert_from_sec(nowLeaveThur, sh_now_leave_thur+inSh);
-            printf("out NOW(restSh, inSh) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
+            long long inNor = (7*(60*60)); // in at 7:00
+            long long inSh = (8*(60*60)) + (30*60); //in at 8:30 
+            calcOffThursday(&nor_leave_thur, &sh_leave_thur, &nor_now_leave_thur, &sh_now_leave_thur, &sh_thur_rest_nor, min_left_week_sec, now_sec, dayCnt);
+
+            convert_from_sec(shThurRestNor, sh_thur_rest_nor+now_sec);
+            printf("To leave @ Thur 14:30 -> leave today @ %02d:%02d:%02d (restNor)\n", shThurRestNor[HR], shThurRestNor[MIN], shThurRestNor[SEC]);
+            /*
+            convert_from_sec(norLeaveThur, nor_leave_thur+inNor);
+            printf("out today @ 15:30 (restNor)-> leave Thur @ %02d:%02d:%02d\n", norLeaveThur[HR], norLeaveThur[MIN], norLeaveThur[SEC]);
+            convert_from_sec(shLeaveThur, sh_leave_thur+inSh);
+            printf("out today @ 14:30 (restSh) -> leave Thur @ %02d:%02d:%02d\n", shLeaveThur[HR], shLeaveThur[MIN], shLeaveThur[SEC]);
+            */
+
+            if(now_sec>(14*3600+30*60))
+            {
+                convert_from_sec(nowLeaveThur, nor_now_leave_thur+inNor);
+                printf("out NOW(restNor, inNor) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
+                convert_from_sec(nowLeaveThur, nor_now_leave_thur+inSh);
+                printf("out NOW(restNor, inSh) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
+                convert_from_sec(nowLeaveThur, sh_now_leave_thur+inNor);
+                printf("out NOW(restSh, inNor) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
+                convert_from_sec(nowLeaveThur, sh_now_leave_thur+inSh);
+                printf("out NOW(restSh, inSh) -> leave Thur @ %02d:%02d:%02d\n", nowLeaveThur[HR], nowLeaveThur[MIN], nowLeaveThur[SEC]);
+            }
         }
     }
 
     print_shape1();
     printf("       SUMMARY\n");
+    printf("     %02d:%02d:%02d left \n", minLeftWeek[HR], minLeftWeek[MIN], minLeftWeek[SEC]);
 
 #ifdef VERBOSE
     printf("weekCnt=%d\tdayCnt=%d\n", weekCnt, dayCnt);
@@ -211,7 +218,6 @@ int main(int argc, char** argv)
 #endif
 
 
-    printf("intTime size %d\n", dayCnt);
     uint64_t xvals[dayCnt];
     uint64_t yvals[dayCnt];
     for(int i=0; i<dayCnt; i++)
