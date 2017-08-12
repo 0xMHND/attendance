@@ -13,7 +13,8 @@
 #include "calc.h"
 #include "plot.h"
 
-#define FILENAME "attendance"
+//#define FILENAME "attendance"
+#define FILENAME "randomWeekG/randomWeeks"
 #define THURSDAY 4
 
 void getArgv(int argc, char** argv, int* dayX, int* dayY, int dayCnt, int weekCnt);
@@ -219,24 +220,35 @@ int main(int argc, char** argv)
 
 
     uint64_t xvals[dayCnt];
-    uint64_t yvals[dayCnt];
+    //uint64_t yvals[2][dayCnt];
+    uint64_t** yvals = malloc( sizeof(uint64_t*) * 2);
+    yvals[0] = malloc( sizeof(uint64_t) * dayCnt);
+    yvals[1] = malloc( sizeof(uint64_t) * dayCnt);
     for(int i=0; i<dayCnt; i++)
     {
-        yvals[i] = inSec[i];
+        yvals[0][i] = inSec[i];
+        yvals[1][i] = outSec[i];
         xvals[i] = i+1;
     }
-    plot_data(xvals, yvals,dayCnt);
+    plot_data(xvals, yvals, dayCnt, 2);
 
     for(int i=0; i<(7*WEEK_MAX); i++)
     {
         free(inTime[i]);
         free(outTime[i]);
     }
+    free(inTime);
+    free(outTime);
     for(int i=0; i<WEEK_MAX; i++) //TODO: extend more than a year
     {
         free(week[i]);
     }
     free(week);
+
+    free(yvals[0]);
+    free(yvals[1]);
+    free(yvals);
+
     return 0 ;
 }
 

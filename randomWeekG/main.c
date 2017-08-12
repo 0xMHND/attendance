@@ -18,7 +18,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define FILENAME "randomWeek"
+#define FILENAME "randomWeeks"
 #define ONEWEEK 7
 #define NUM_WEEK 13
 
@@ -28,14 +28,13 @@ void formatStr( char* str, int cnt)
 {
     
     int inTime[3] = {0};
-    inTime[HR] = rand()%24;
+    inTime[HR] = (rand()%6) + 6; //from 6am to 12pm
     inTime[MIN] = rand()%60;
     inTime[SEC] = rand()%60;
     int outTime[3] = { 0 };
     while(outTime[HR] < inTime[HR])
     {
-       inTime[MIN] = rand()%20;
-       outTime[HR] = rand()%24;
+       outTime[HR] = ( rand()%9 ) + 14; //from 2pm to 10pm
     }
     outTime[MIN] = rand()%60;
     while( (outTime[HR]==inTime[HR]) && (outTime[MIN]<=inTime[MIN]) )
@@ -49,31 +48,24 @@ void formatStr( char* str, int cnt)
     {
         case 0:
             sprintf( str, "S %d:%d:%d %d:%d:%d\n", inTime[HR], inTime[MIN], inTime[SEC], outTime[HR], outTime[MIN], outTime[SEC]);
-//            strcpy( str,"Sunday\n");
             break;
         case 1:
             sprintf( str, "M %d:%d:%d %d:%d:%d\n", inTime[HR], inTime[MIN], inTime[SEC], outTime[HR], outTime[MIN], outTime[SEC]);
-//            strcpy( str,"Monday\n");
             break;
         case 2:
             sprintf( str, "T %d:%d:%d %d:%d:%d\n", inTime[HR], inTime[MIN], inTime[SEC], outTime[HR], outTime[MIN], outTime[SEC]);
-//            strcpy( str,"Tuesday\n");
             break;
         case 3:
             sprintf( str, "W %d:%d:%d %d:%d:%d\n", inTime[HR], inTime[MIN], inTime[SEC], outTime[HR], outTime[MIN], outTime[SEC]);
-//            strcpy( str,"Wednesday\n");
             break;
         case 4:
             sprintf( str, "R %d:%d:%d %d:%d:%d\n", inTime[HR], inTime[MIN], inTime[SEC], outTime[HR], outTime[MIN], outTime[SEC]);
-//            strcpy( str,"Thursday\n");
             break;
         case 5:
             sprintf( str, "F %d:%d:%d %d:%d:%d\n", inTime[HR], inTime[MIN], inTime[SEC], outTime[HR], outTime[MIN], outTime[SEC]);
-//            strcpy( str,"Friday\n");
             break;
         case 6:
             sprintf( str, "U %d:%d:%d %d:%d:%d\n", inTime[HR], inTime[MIN], inTime[SEC], outTime[HR], outTime[MIN], outTime[SEC]);
-//          strcpy( str,"Saturday\n");
             break;
         default:
             printf("error");
@@ -90,12 +82,14 @@ int main(){
 
     srand((unsigned) time(NULL));
 
+    int numWeeks = rand()%20 + 1; //between 1 and 21 weeks
+
     FILE *fp = fopen( FILENAME, "w");
 
     int weekCnt = 0;
 
 
-    while(weekCnt < NUM_WEEK)
+    while(weekCnt < numWeeks)
     {
         sprintf(w_str, "WEEK%d\n", ++weekCnt);
         fputs(w_str, fp);

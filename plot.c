@@ -10,7 +10,7 @@
  * description:	This function takes x and y values and creates
  * 				a PNG image showing the graphical representation of that data
 ***************************/
-int plot_data(uint64_t * xvals, uint64_t * yvals, int size)
+int plot_data(uint64_t * xvals, uint64_t ** yvals, int size, int yValCnt)
 {
 	char buf[BUF_SIZE];
 
@@ -27,16 +27,15 @@ int plot_data(uint64_t * xvals, uint64_t * yvals, int size)
 
 	//Write data to the data file
 	for (int i=0; i < size; i++) {
-        /*
-		if (i > 0)
-			fprintf(temp, "%ld %ld\n", xvals[i], yvals[i-1]);
-		else if (i == 0)
-			fprintf(temp, "%ld 0\n", xvals[i]);
-            */
-        if( (yvals[i]!=0))
-            fprintf(temp, "%ld %ld\n", xvals[i], yvals[i]); //Write the data to a temporary file
-        else
-            fprintf(temp, "%ld \n", xvals[i]); //Write the data to a temporary file
+        fprintf(temp, "%ld ", xvals[i]);
+        for(int j=0; j<yValCnt; j++)
+        {
+            if( (yvals[j][i]!=0))
+            {
+                fprintf(temp, "%ld ", yvals[j][i]); //Write the data to a temporary file
+            }
+        }
+        fprintf(temp, "\n"); //Write the data to a temporary file
 	}
 	if (fclose(temp) == EOF)
 		 fprintf(stderr,"Could not close chart.dat file pointer: %s.\n", strerror(errno));
