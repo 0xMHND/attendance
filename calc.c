@@ -38,9 +38,9 @@ void calcWorkedSec(long long* _workedTime, int dayX, int dayY, int dayCnt, long 
     long long workedTime = 0;
     workedTime = *_workedTime;
     int today = dayCnt-1;
-    long long oneDay = 0;
 
 #ifdef DEBUG
+    long long oneDay = 0;
     int oneDay_v[3] = {0};
 // print the period's log
     for(int i=dayX; i<=dayY; i++)
@@ -51,18 +51,20 @@ void calcWorkedSec(long long* _workedTime, int dayX, int dayY, int dayCnt, long 
         if( (i==dayY) && (dayY==today) && (_outSec[i]==0)) //if dayY is Today
         {
             workedTime += _nowSec - _inSec[i]; // -59 to 59
-            oneDay = _nowSec - _inSec[i]; // -59 to 59
 
 #ifdef DEBUG
-    convert_from_sec(oneDay_v, oneDay);
-    printf("DEBUG: TODAY[%d] worked %02d:%02d:%02d\n", i, oneDay_v[HR], oneDay_v[MIN], oneDay_v[SEC]);
-    printf("DEBUG: nowTime %lld \n", _nowSec);
+            oneDay = _nowSec - _inSec[i]; // -59 to 59
+            convert_from_sec(oneDay_v, oneDay);
+            printf("DEBUG: TODAY[%d] worked %02d:%02d:%02d\n", i, oneDay_v[HR], oneDay_v[MIN], oneDay_v[SEC]);
+            printf("DEBUG: nowTime %lld \n", _nowSec);
 #endif
         }
         else
         {
             workedTime += _outSec[i] - _inSec[i]; // -59 to 59
+#ifdef DEBUG
             oneDay = _outSec[i] - _inSec[i]; // -59 to 59
+#endif
         }
 
 #ifdef DEBUG

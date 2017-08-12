@@ -73,9 +73,7 @@ int main(int argc, char** argv)
     long long sh_leave_today = 0;
     int norLeaveToday[3] = {0};
     long long nor_leave_today = 0;
-    int norLeaveThur[3] = {0};
     long long nor_leave_thur = 0;
-    int shLeaveThur[3] = {0};
     long long sh_leave_thur = 0;
     int nowLeaveThur[3] = {0};
     long long nor_now_leave_thur = 0;
@@ -220,7 +218,6 @@ int main(int argc, char** argv)
 
 
     uint64_t xvals[dayCnt];
-    //uint64_t yvals[2][dayCnt];
     uint64_t** yvals = malloc( sizeof(uint64_t*) * 2);
     yvals[0] = malloc( sizeof(uint64_t) * dayCnt);
     yvals[1] = malloc( sizeof(uint64_t) * dayCnt);
