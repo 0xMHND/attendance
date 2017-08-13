@@ -13,8 +13,8 @@
 #include "calc.h"
 #include "plot.h"
 
-//#define FILENAME "attendance"
-#define FILENAME "randomWeekG/randomWeeks"
+#define FILENAME "attendance"
+//#define FILENAME "randomWeekG/randomWeeks"
 #define THURSDAY 4
 
 void getArgv(int argc, char** argv, int* dayX, int* dayY, int dayCnt, int weekCnt);
@@ -224,7 +224,10 @@ int main(int argc, char** argv)
     for(int i=0; i<dayCnt; i++)
     {
         yvals[0][i] = inSec[i];
-        yvals[1][i] = outSec[i];
+        if( (i==dayY)&&(outSec[i]==0) )
+            yvals[1][i] = now_sec;
+        else
+            yvals[1][i] = outSec[i];
         xvals[i] = i+1;
     }
     plot_data(xvals, yvals, dayCnt, 2);

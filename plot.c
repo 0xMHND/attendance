@@ -30,10 +30,10 @@ int plot_data(uint64_t * xvals, uint64_t ** yvals, int size, int yValCnt)
         fprintf(temp, "%ld ", xvals[i]);
         for(int j=0; j<yValCnt; j++)
         {
-//            if( (yvals[j][i]!=0))
-//            {
+            if( (yvals[j][i]!=0))
+            {
                 fprintf(temp, "%ld ", yvals[j][i]); //Write the data to a temporary file
-//            }
+            }
         }
         fprintf(temp, "\n"); //Write the data to a temporary file
 	}
