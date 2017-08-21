@@ -143,6 +143,7 @@ int main(int argc, char** argv)
 
     calcWeekRemSec(&left_week_sec, total_week_sec, my_week_sec);
     convert_from_sec(leftWeek, left_week_sec);
+
     if(mode == 0){
         calcMinWeekRemSec(&min_left_week_sec, total_week_sec, my_week_sec, dayCnt);
         convert_from_sec(minLeftWeek, min_left_week_sec);
@@ -165,13 +166,13 @@ int main(int argc, char** argv)
         convert_from_sec(shLeaveToday, sh_leave_today+now_sec);
         printf(" @ %02d:%02d:%02d\n", shLeaveToday[HR], shLeaveToday[MIN], shLeaveToday[SEC]);
 
-//    int possible_time = (17-6) * (60*60); //from 6am to 5pm
-    int possible_time = (24) * (60*60); //from 6am to 5pm
-    int period = possible_time/(60*10); //halfhours
-    int start = (inSec[dayY] / (60*10) ) - (7*60/10) ; // in time - nor in time  
-    int end = (now_sec/(60*10)) - (7*60/10);
-    int target = ((nor_leave_today+now_sec)/(60*10)) - (7*60/10); //when i leave if i work normal day(8:30) 
-    drawToday(period, start, end, target);
+    //    int possible_time = (17-6) * (60*60); //from 6am to 5pm
+        int possible_time = (24) * (60*60); //from 6am to 5pm
+        int period = possible_time/(60*10); //halfhours
+        int start = (inSec[dayY] / (60*10) ) - (7*60/10) ; // in time - nor in time  
+        int end = (now_sec/(60*10)) - (7*60/10);
+        int target = ((nor_leave_today+now_sec)/(60*10)) - (7*60/10); //when i leave if i work normal day(8:30) 
+        drawToday(period, start, end, target);
 
         if(today < THURSDAY)
         {
@@ -204,7 +205,11 @@ int main(int argc, char** argv)
 
     print_shape1();
     printf("       SUMMARY\n");
-    printf("     %02d:%02d:%02d left \n", minLeftWeek[HR], minLeftWeek[MIN], minLeftWeek[SEC]);
+    if(mode == 0)
+        printf("     %02d:%02d:%02d left \n", minLeftWeek[HR], minLeftWeek[MIN], minLeftWeek[SEC]);
+    else
+        printf("     %02d:%02d:%02d left \n", leftWeek[HR], leftWeek[MIN], leftWeek[SEC]);
+    printf("     %02d:%02d:%02d worked \n", myWeekTime[HR], myWeekTime[MIN], myWeekTime[SEC]);
 
 #ifdef VERBOSE
     printf("weekCnt=%d\tdayCnt=%d\n", weekCnt, dayCnt);
