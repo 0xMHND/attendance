@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 CALC:    
     what is the supposed week's total work? >>> _totalWeekTime
              WORK_DAYS_PER_WEEK, WEEK_WORK_REQ, LUNCH_BREAK
@@ -54,8 +55,9 @@ _norRemWTime =
 *************************************************************************************************************************
 
 Mode:
-    0- normal Shift // average work hrs
+    0- normal Shift // in 7:00 out 15:30
     1- short Shift // in 8:30 out 14:30
+(constant?) _totalWTime = 40:00:00 + 5(00:30:00)  // 40 hr/week + 5 'lunch-break'
 
 get data from attendacne sheet
     week info:

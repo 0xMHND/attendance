@@ -1,0 +1,27 @@
+
+
+GOAL: tell me when to get off work? how many hours left? 
+
+    subGoal: calculate when shd i get off today to work 8 hours of work next days. 
+    subGoal: How many hours did I work in a week?
+-------
+(+ only) Total hours worked since start of week on Sun 00:00:01 
+(+ or -) Total remTime in a week.
+(+ or -) Total remTime today to achive 8 hours next days in a week.
+(+ only) minimum time left in a week
+(+ only) maximum time to work today: netWTime - minLeftTime
+(xx:xx:xx) Time to get off work on Thursday(lastDay) assuming 8 hours Today->Wednesday.
+
+Features: 
+    stats 
+        -> when I usually come to work.
+        -> longest day? shortest day?
+        -> avg week hours
+
+    gnu-plot
+    visuals the day, where am I currently? project finshing at different times.
+
+        
+    
+
+
