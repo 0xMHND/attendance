@@ -9,11 +9,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include "ansiiColor.h"
+#include "../lib/ansiiColor.h"
 #include "calc.h"
 #include "plot.h"
 
-#define FILENAME "attendance"
+#define FILENAME "../attendance"
 //#define FILENAME "randomWeekG/randomWeeks"
 #define THURSDAY 4
 
