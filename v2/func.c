@@ -2,6 +2,42 @@
 #include <stdlib.h>
 #include "func.h"
 
+double avg_out(WEEK_t *w, uint16_t index){
+    double sum = 0.0;
+    uint16_t days_cnt = 0;
+    for(int i=0; i<index; i++)
+    {
+        for(int j=0; j<7; j++)
+        {
+            if(w[i].days[j].homeIN > 0)
+            {
+                sum += w[i].days[j].homeIN - w[i].days[j].workOut;
+                days_cnt++;
+            }
+        }
+
+    }
+    sum = sum/days_cnt;
+    return sum;
+}
+double avg_in(WEEK_t *w, uint16_t index){
+    double sum = 0.0;
+    uint16_t days_cnt = 0;
+    for(int i=0; i<index; i++)
+    {
+        for(int j=0; j<7; j++)
+        {
+            if(w[i].days[j].homeOUT > 0)
+            {
+                sum += w[i].days[j].workIn - w[i].days[j].homeOUT;
+                days_cnt++;
+            }
+        }
+
+    }
+    sum = sum/days_cnt;
+    return sum;
+}
 
 void readHome(WEEK_t *w) {
 
@@ -43,37 +79,6 @@ void readHome(WEEK_t *w) {
     }
     fclose(fp);
 }
-void printStats(WEEK_t *stats, uint16_t week_index){
-    uint16_t days_cnt = 0;
-    uint8_t hr = 0;
-    uint8_t min = 0;
-    uint8_t sec = 0;
-
-    for(int i=0; i<week_index; i++)
-    {
-        printf("week[%d] %d-%d-%d\n", stats[i].week_num, stats[i].week_month, stats[i].week_day, stats[i].week_year);
-        for(int j=0; j<7; j++)
-        {
-            if(stats[i].days[j].workIn > 0)
-                days_cnt++;
-            hr = stats[i].days[j].workIn / 3600;
-            min = (stats[i].days[j].workIn % 3600) / 60;
-            sec = (stats[i].days[j].workIn % 3600) % 60;
-            printf("%c %02d:%02d:%02d ", stats[i].days[j].day, hr, min, sec);
-            hr = stats[i].days[j].workOut / 3600;
-            min = (stats[i].days[j].workOut % 3600) / 60;
-            sec = (stats[i].days[j].workOut % 3600) % 60;
-            printf(" %02d:%02d:%02d", hr, min, sec);
-            hr = stats[i].days[j].homeOUT / 3600;
-            min = (stats[i].days[j].homeOUT % 3600) / 60;
-            printf("   home %02d:%02d", hr, min);
-            hr = stats[i].days[j].homeIN / 3600;
-            min = (stats[i].days[j].homeIN % 3600) / 60;
-            printf(" %02d:%02d\n", hr, min);
-        }
-    }
-    printf("(%d) weeks and %d worked days\n", week_index, days_cnt);
-}
 void readAttendance(WEEK_t *w, uint16_t* week_index) {
 
     uint16_t weekCnt = 0;
@@ -112,6 +117,12 @@ void readAttendance(WEEK_t *w, uint16_t* week_index) {
             w[weekCnt-1].days[dayIndex].day = day;
             w[weekCnt-1].days[dayIndex].workIn = temp[2] + 60*temp[1] + 3600*temp[0];
             w[weekCnt-1].days[dayIndex].workOut = temp[5] + 60*temp[4] + 3600*temp[3];
+            temp[0] = 0;
+            temp[1] = 0;
+            temp[2] = 0;
+            temp[3] = 0;
+            temp[4] = 0;
+            temp[5] = 0;
         }
  //       printf("%c %d %d\n", w[weekCnt-1].days[dayIndex].day,w[weekCnt-1].days[dayIndex].workIn, w[weekCnt-1].days[dayIndex].workOut);
     }
@@ -119,6 +130,9 @@ void readAttendance(WEEK_t *w, uint16_t* week_index) {
 
     *week_index = weekCnt;
 }
+
+
+
 int return_day_number(char day){
     switch(day){
         case 'S':
@@ -138,4 +152,70 @@ int return_day_number(char day){
         default:
             return -1;
     }
+}
+
+
+
+
+void printStats(WEEK_t *stats, uint16_t week_index){
+    uint16_t days_cnt = 0;
+    uint8_t hr = 0;
+    uint8_t min = 0;
+    uint8_t sec = 0;
+
+    for(int i=0; i<week_index; i++)
+    {
+        printf("week[%d] %d-%d-%d\n", stats[i].week_num, stats[i].week_month, stats[i].week_day, stats[i].week_year);
+        for(int j=0; j<7; j++)
+        {
+            if(stats[i].days[j].workIn > 0)
+                days_cnt++;
+            hr = stats[i].days[j].workIn / 3600;
+            min = (stats[i].days[j].workIn % 3600) / 60;
+            sec = (stats[i].days[j].workIn % 3600) % 60;
+            printf("%c %02d:%02d:%02d ", stats[i].days[j].day, hr, min, sec);
+            hr = stats[i].days[j].workOut / 3600;
+            min = (stats[i].days[j].workOut % 3600) / 60;
+            sec = (stats[i].days[j].workOut % 3600) % 60;
+            printf(" %02d:%02d:%02d", hr, min, sec);
+            hr = stats[i].days[j].homeOUT / 3600;
+            min = (stats[i].days[j].homeOUT % 3600) / 60;
+            printf("   home %02d:%02d", hr, min);
+            hr = stats[i].days[j].homeIN / 3600;
+            min = (stats[i].days[j].homeIN % 3600) / 60;
+            printf(" %02d:%02d\n", hr, min);
+        }
+    }
+    printf("(%d) weeks and %d worked days\n", week_index, days_cnt);
+}
+
+void plot_stats(WEEK_t * w, uint16_t index, time_t time_now){
+
+    uint16_t x_index = index * 7;
+    uint64_t xvals[x_index];
+    uint64_t** yvals = malloc( sizeof(uint64_t*) * COLUMNS);
+
+    yvals[0] = malloc( sizeof(uint64_t) * x_index); //homeOUT
+    yvals[1] = malloc( sizeof(uint64_t) * x_index); //workIn
+    yvals[2] = malloc( sizeof(uint64_t) * x_index); //workOut
+
+    uint16_t y_index = 0;
+    for(int i=0; i < index; i++)
+    {
+        for(int j=0; j<7; j++)
+        {
+            if(w[i].days[j].homeOUT > 0)
+                yvals[0][y_index] = w[i].days[j].homeOUT;
+            else
+                yvals[0][y_index] = 0;
+
+            yvals[1][y_index] = w[i].days[j].workIn;
+            yvals[2][y_index] = w[i].days[j].workOut;
+            xvals[y_index] = y_index+1;
+            y_index++;
+        }
+    }
+
+    plot_data(xvals, yvals, x_index, COLUMNS);
+
 }

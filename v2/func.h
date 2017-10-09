@@ -3,13 +3,15 @@
 #endif
 
 #include <stdint.h>
+#include "plot.h"
 
-#define FILE_ATTENDANCE "attendance"
-#define FILE_HOME "home"
+#define FILE_ATTENDANCE "../attendance"
+#define FILE_HOME "../home"
 
 #define DAYS_SIZE 52*7 //one year
 #define WEEK_MAX 52 //one year
 #define LINE_MAX 512
+#define COLUMNS 3 //homeOUt, workIN, workOUT
 
 typedef enum {OFF, FULL, HALF, ABS, LATE, SPECIAL} DAY_t;
 
@@ -33,6 +35,9 @@ typedef struct {
 } WEEK_t;
 
 
+void plot_stats(WEEK_t * w, uint16_t index, time_t time_now);
+double avg_out(WEEK_t *w, uint16_t index);
+double avg_in(WEEK_t *w, uint16_t index);
 int return_day_number(char day);
 void readAttendance(WEEK_t *w, uint16_t* week_index); 
 void readHome(WEEK_t *w); 
