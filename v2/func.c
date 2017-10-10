@@ -85,12 +85,14 @@ void readAttendance(WEEK_t *w, uint16_t* week_index) {
     uint8_t dayIndex = 0;
     char day = 'X';
     char buf[LINE_MAX];
+    char str[256];
     int temp[6] = {0};
 
     FILE* fp = fopen(FILE_ATTENDANCE, "r");
     if (fp == NULL)
         exit(EXIT_FAILURE);
 
+    memset(str, 0, sizeof(str)); 
     while (fgets(buf, sizeof(buf), fp) != NULL) {
         if(buf[1]=='E') //if first word is WEEK
         { 
@@ -103,17 +105,19 @@ void readAttendance(WEEK_t *w, uint16_t* week_index) {
         }
 
         else{
-            sscanf(buf, "%c %d:%d:%d %d:%d:%d", &day,
+            sscanf(buf, "%c %d:%d:%d %d:%d:%d NOTE:%s", &day,
                                                 &temp[0],
                                                 &temp[1],
                                                 &temp[2],
                                                 &temp[3],
                                                 &temp[4],
-                                                &temp[5]);
+                                                &temp[5],
+                                                str);
             dayIndex = return_day_number(day);
             if(dayIndex == -1)
                 printf("error reading day index");
 
+            memcpy(w[weekCnt-1].days[dayIndex].note, str, sizeof(str));
             w[weekCnt-1].days[dayIndex].day = day;
             w[weekCnt-1].days[dayIndex].workIn = temp[2] + 60*temp[1] + 3600*temp[0];
             w[weekCnt-1].days[dayIndex].workOut = temp[5] + 60*temp[4] + 3600*temp[3];
@@ -123,6 +127,7 @@ void readAttendance(WEEK_t *w, uint16_t* week_index) {
             temp[3] = 0;
             temp[4] = 0;
             temp[5] = 0;
+            memset(str, 0, sizeof(str)); 
         }
  //       printf("%c %d %d\n", w[weekCnt-1].days[dayIndex].day,w[weekCnt-1].days[dayIndex].workIn, w[weekCnt-1].days[dayIndex].workOut);
     }
@@ -198,6 +203,7 @@ void plot_stats(WEEK_t * w, uint16_t index, time_t time_now){
     yvals[0] = malloc( sizeof(uint64_t) * x_index); //homeOUT
     yvals[1] = malloc( sizeof(uint64_t) * x_index); //workIn
     yvals[2] = malloc( sizeof(uint64_t) * x_index); //workOut
+    yvals[3] = malloc( sizeof(uint64_t) * x_index); //workIN
 
     uint16_t y_index = 0;
     for(int i=0; i < index; i++)
@@ -211,6 +217,12 @@ void plot_stats(WEEK_t * w, uint16_t index, time_t time_now){
 
             yvals[1][y_index] = w[i].days[j].workIn;
             yvals[2][y_index] = w[i].days[j].workOut;
+
+            if(w[i].days[j].homeIN > 0)
+                yvals[3][y_index] = w[i].days[j].homeIN;
+            else
+                yvals[3][y_index] = 0;
+
             xvals[y_index] = y_index+1;
             y_index++;
         }
