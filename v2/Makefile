@@ -4,7 +4,7 @@ CC = gcc
 OO = -O3
 WARN = -Wall
 PROFILE = -pg --static -g3
-CFLAGS = $(WARN)
+CFLAGS = $(WARN) $(PROFILE) 
 
 .PHONY: default all clean
 
