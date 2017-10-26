@@ -25,7 +25,7 @@ int main(int argc, char** argv){
         stats[week_index-1].days[timeinfo->tm_wday].workOut = time_now;
     readHome(stats);
 
-//    printStats(stats, week_index);
+    printStats(stats, week_index);
 
     printf ("avg To work : ");
     print_sec(avg_in(stats, week_index));
