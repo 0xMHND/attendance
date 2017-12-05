@@ -33,14 +33,15 @@ void drawToday( int period, int start, int end, int target)
 printf("]");
     for(int i=0; i<period; i++)
     {
-        if( (i>start) && (i<end) )
-            printf(ANSI_COLOR_RED"-"ANSI_COLOR_RESET);
-        else
-            printf(ANSI_COLOR_LIGHTCYAN"-"ANSI_COLOR_RESET);
-        if( i==target )
-            printf(ANSI_COLOR_REVERSE"-"ANSI_COLOR_RESET);
-        if( i==(17*6) )
-            printf(ANSI_COLOR_YELLOWBLUE"-"ANSI_COLOR_RESET);
+        if( (i>start) && (i<end) ) //between my start until my end(now)
+            printf(ANSI_COLOR_REVERSE"\u2588"ANSI_COLOR_RESET);
+        else // other blocks
+            printf(ANSI_COLOR_LIGHTCYAN"\u2591"ANSI_COLOR_RESET);
+        if( i==target ) //target is supposed 8hr normal day.
+            printf(ANSI_COLOR_RED"\u2588"ANSI_COLOR_RESET);
+            //printf(ANSI_COLOR_REVERSE"\u2591"ANSI_COLOR_RESET);
+        if( i==(17*6) ) //at 5pm
+            printf(ANSI_COLOR_YELLOWBLUE"\u2588"ANSI_COLOR_RESET);
     }
 printf("[\n");
 } 
