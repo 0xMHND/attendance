@@ -16,6 +16,9 @@
 #define FILENAME "../attendance"
 //#define FILENAME "randomWeekG/randomWeeks"
 #define THURSDAY 4
+#define _7AM_10MIN_INTERVALS (7*60/10)
+#define _5PM_10MIN_INTERVALS (17*60/10)
+#define ONE_DAY_IN_SEC 24*60*60
 
 void getArgv(int argc, char** argv, int* dayX, int* dayY, int dayCnt, int weekCnt);
 void readFile(int** inTime, int** outTime, int** week, int* out_weekCnt, int* out_dayCnt);
@@ -27,21 +30,26 @@ void print_shape1()
 
 int mode = 0;
 
-void drawToday( int period, int start, int end, int target)
+void drawToday( uint8_t period, uint8_t start, uint8_t end, uint8_t target)
 {
 
+//u2588 -> block
+//u2591 -> dots
 printf("]");
-    for(int i=0; i<period; i++)
+    for(uint8_t i=start; i<period; i++)
     {
         if( (i>start) && (i<end) ) //between my start until my end(now)
-            printf(ANSI_COLOR_REVERSE"\u2588"ANSI_COLOR_RESET);
+            printf(ANSI_COLOR_REVERSE"#"ANSI_COLOR_RESET);
+            //printf(ANSI_COLOR_REVERSE"\u2588"ANSI_COLOR_RESET);
         else // other blocks
-            printf(ANSI_COLOR_LIGHTCYAN"\u2591"ANSI_COLOR_RESET);
+            printf(ANSI_COLOR_LIGHTCYAN"-"ANSI_COLOR_RESET);
+            //printf(ANSI_COLOR_LIGHTCYAN"\u2591"ANSI_COLOR_RESET);
         if( i==target ) //target is supposed 8hr normal day.
-            printf(ANSI_COLOR_RED"\u2588"ANSI_COLOR_RESET);
-            //printf(ANSI_COLOR_REVERSE"\u2591"ANSI_COLOR_RESET);
-        if( i==(17*6) ) //at 5pm
-            printf(ANSI_COLOR_YELLOWBLUE"\u2588"ANSI_COLOR_RESET);
+            printf(ANSI_COLOR_RED"#"ANSI_COLOR_RESET);
+            //printf(ANSI_COLOR_RED"\u2591"ANSI_COLOR_RESET);
+        if( i==(_5PM_10MIN_INTERVALS) ) //at 5pm
+            printf(ANSI_COLOR_YELLOWBLUE"#"ANSI_COLOR_RESET);
+            //printf(ANSI_COLOR_YELLOWBLUE"\u2591"ANSI_COLOR_RESET);
     }
 printf("[\n");
 } 
@@ -167,13 +175,11 @@ int main(int argc, char** argv)
         convert_from_sec(shLeaveToday, sh_leave_today+now_sec);
         printf(" @ %02d:%02d:%02d\n", shLeaveToday[HR], shLeaveToday[MIN], shLeaveToday[SEC]);
 
-    //    int possible_time = (17-6) * (60*60); //from 6am to 5pm
-        int possible_time = (24) * (60*60); //from 6am to 5pm
-        int period = possible_time/(60*10); //halfhours
-        int start = (inSec[dayY] / (60*10) ) - (7*60/10) ; // in time - nor in time  
-        int end = (now_sec/(60*10)) - (7*60/10);
-        int target = ((nor_leave_today+now_sec)/(60*10)) - (7*60/10); //when i leave if i work normal day(8:30) 
-        drawToday(period, start, end, target);
+        uint8_t period = ONE_DAY_IN_SEC/(60*10); //one day of 10 minutes.
+        uint8_t start = (inSec[dayY] / (60*10) );// - _7AM_10MIN_INTERVALS ;   //in time in 10 minutes intervals - 7am in 10 minutes intervals
+        uint8_t end = (now_sec/(60*10));// - _7AM_10MIN_INTERVALS;             //now time in 10 minutes intervals - 7am in 10 minutes intervals
+        uint8_t target = ((nor_leave_today+now_sec)/(60*10));// - _7AM_10MIN_INTERVALS; //today's normal leave time in 10 minutes intervals - 7am in 10 minutes intervals
+        drawToday(period, start, end, target); 
 
         if(today < THURSDAY)
         {
