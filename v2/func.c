@@ -200,9 +200,7 @@ void printStats(WEEK_t *stats, uint16_t week_index){
             printf("   worked %02d:%02d:%02d\n", hr, min, sec);
             total_sec += (stats[i].days[j].workOut - stats[i].days[j].workIn);
         }
-        printf("total_sec = %d ONE_WEEK: %d\n", total_sec, ONE_WEEK_TOTAL_SEC);
         total_sec = ONE_WEEK_TOTAL_SEC - total_sec;
-        printf("total_sec = %d ONE_WEEK: %d\n", total_sec, ONE_WEEK_TOTAL_SEC);
         rem_hr = (total_sec)/ 3600;
         rem_min = ((total_sec)% 3600)/60;
         rem_sec = ((total_sec)% 3600) % 60;
