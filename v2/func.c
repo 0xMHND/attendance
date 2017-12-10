@@ -188,7 +188,10 @@ void printStats(WEEK_t *stats, uint16_t week_index){
             printf("   home %02d:%02d", hr, min);
             hr = stats[i].days[j].homeIN / 3600;
             min = (stats[i].days[j].homeIN % 3600) / 60;
-            printf(" %02d:%02d\n", hr, min);
+            printf(" %02d:%02d", hr, min);
+            hr = (stats[i].days[j].workOut- stats[i].days[j].workIn)/ 3600;
+            min = ((stats[i].days[j].workOut- stats[i].days[j].workIn)% 3600)/60;
+            printf("   worked %02d:%02d\n", hr, min);
         }
     }
     printf("(%d) weeks and %d worked days\n", week_index, days_cnt);
