@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include "func.h"
 
+#define WORK_DAY_SEC ( (8*60*60) + (30*60) ) //8 hr and 30 min
+#define ONE_WEEK_TOTAL_SEC (5*WORK_DAY_SEC)
+
 double avg_out(WEEK_t *w, uint16_t index){
     double sum = 0.0;
     uint16_t days_cnt = 0;
@@ -160,8 +163,6 @@ int return_day_number(char day){
 }
 
 
-
-
 void printStats(WEEK_t *stats, uint16_t week_index){
     uint16_t days_cnt = 0;
     uint8_t hr = 0;
@@ -170,6 +171,10 @@ void printStats(WEEK_t *stats, uint16_t week_index){
 
     for(int i=0; i<week_index; i++)
     {
+        int32_t total_sec = 0;
+        int8_t rem_hr = 0;
+        int8_t rem_min = 0;
+        int8_t rem_sec = 0;
         printf("week[%d] %d-%d-%d\n", stats[i].week_num, stats[i].week_month, stats[i].week_day, stats[i].week_year);
         for(int j=0; j<7; j++)
         {
@@ -191,8 +196,17 @@ void printStats(WEEK_t *stats, uint16_t week_index){
             printf(" %02d:%02d", hr, min);
             hr = (stats[i].days[j].workOut- stats[i].days[j].workIn)/ 3600;
             min = ((stats[i].days[j].workOut- stats[i].days[j].workIn)% 3600)/60;
-            printf("   worked %02d:%02d\n", hr, min);
+            sec = ((stats[i].days[j].workOut - stats[i].days[j].workIn)% 3600) % 60;
+            printf("   worked %02d:%02d:%02d\n", hr, min, sec);
+            total_sec += (stats[i].days[j].workOut - stats[i].days[j].workIn);
         }
+        printf("total_sec = %d ONE_WEEK: %d\n", total_sec, ONE_WEEK_TOTAL_SEC);
+        total_sec = ONE_WEEK_TOTAL_SEC - total_sec;
+        printf("total_sec = %d ONE_WEEK: %d\n", total_sec, ONE_WEEK_TOTAL_SEC);
+        rem_hr = (total_sec)/ 3600;
+        rem_min = ((total_sec)% 3600)/60;
+        rem_sec = ((total_sec)% 3600) % 60;
+        printf("--------- total left: %d:%d:%d ---------\n", rem_hr, rem_min, rem_sec);
     }
     printf("(%d) weeks and %d worked days\n", week_index, days_cnt);
 }
