@@ -180,25 +180,65 @@ void printStats(WEEK_t *stats, uint16_t week_index){
         {
             if(stats[i].days[j].workIn > 0)
                 days_cnt++;
-            hr = stats[i].days[j].workIn / 3600;
-            min = (stats[i].days[j].workIn % 3600) / 60;
-            sec = (stats[i].days[j].workIn % 3600) % 60;
-            printf("%c %02d:%02d:%02d ", stats[i].days[j].day, hr, min, sec);
-            hr = stats[i].days[j].workOut / 3600;
-            min = (stats[i].days[j].workOut % 3600) / 60;
-            sec = (stats[i].days[j].workOut % 3600) % 60;
-            printf(" %02d:%02d:%02d", hr, min, sec);
-            hr = stats[i].days[j].homeOUT / 3600;
-            min = (stats[i].days[j].homeOUT % 3600) / 60;
-            printf("   home %02d:%02d", hr, min);
-            hr = stats[i].days[j].homeIN / 3600;
-            min = (stats[i].days[j].homeIN % 3600) / 60;
-            printf(" %02d:%02d", hr, min);
-            hr = (stats[i].days[j].workOut- stats[i].days[j].workIn)/ 3600;
-            min = ((stats[i].days[j].workOut- stats[i].days[j].workIn)% 3600)/60;
-            sec = ((stats[i].days[j].workOut - stats[i].days[j].workIn)% 3600) % 60;
-            printf("   worked %02d:%02d:%02d\n", hr, min, sec);
-            total_sec += (stats[i].days[j].workOut - stats[i].days[j].workIn);
+
+            /********** WORK *********/
+            if(stats[i].days[j].workIn || stats[i].days[j].workOut)
+            {
+                printf("%c", stats[i].days[j].day);
+
+                if(stats[i].days[j].workIn)
+                {
+                    hr = stats[i].days[j].workIn / 3600;
+                    min = (stats[i].days[j].workIn % 3600) / 60;
+                    sec = (stats[i].days[j].workIn % 3600) % 60;
+                    printf(" %02d:%02d:%02d ", hr, min, sec);
+                }
+                else
+                {
+                    printf("         ");
+                }
+                if(stats[i].days[j].workOut)
+                {
+                    hr = stats[i].days[j].workOut / 3600;
+                    min = (stats[i].days[j].workOut % 3600) / 60;
+                    sec = (stats[i].days[j].workOut % 3600) % 60;
+                    printf(" %02d:%02d:%02d", hr, min, sec);
+                }
+                else
+                {
+                    printf("         ");
+                }
+                /********** HOME *********/
+                printf("   home");
+
+                if(stats[i].days[j].homeOUT)
+                {
+                    hr = stats[i].days[j].homeOUT / 3600;
+                    min = (stats[i].days[j].homeOUT % 3600) / 60;
+                    printf(" %02d:%02d", hr, min);
+                }
+                else
+                {
+                    printf("      ");
+                }
+                if(stats[i].days[j].homeIN)
+                {
+                    hr = stats[i].days[j].homeIN / 3600;
+                    min = (stats[i].days[j].homeIN % 3600) / 60;
+                    printf(" %02d:%02d", hr, min);
+                }
+                else
+                {
+                    printf("      ");
+                }
+
+                /********** TOTAL WORKED *********/
+                hr = (stats[i].days[j].workOut- stats[i].days[j].workIn)/ 3600;
+                min = ((stats[i].days[j].workOut- stats[i].days[j].workIn)% 3600)/60;
+                sec = ((stats[i].days[j].workOut - stats[i].days[j].workIn)% 3600) % 60;
+                printf("   worked %02d:%02d:%02d\n", hr, min, sec);
+                total_sec += (stats[i].days[j].workOut - stats[i].days[j].workIn);
+            }
         }
         total_sec = ONE_WEEK_TOTAL_SEC - total_sec;
         rem_hr = (total_sec)/ 3600;
