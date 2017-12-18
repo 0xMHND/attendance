@@ -244,7 +244,7 @@ void printStats(WEEK_t *stats, uint16_t week_index){
         rem_hr = (total_sec)/ 3600;
         rem_min = ((total_sec)% 3600)/60;
         rem_sec = ((total_sec)% 3600) % 60;
-        printf("--------- total left: %d:%d:%d ---------\n", rem_hr, rem_min, rem_sec);
+        printf("--------- total left: %02d:%02d:%02d ---------\n", rem_hr, rem_min, rem_sec);
     }
     printf("(%d) weeks and %d worked days\n", week_index, days_cnt);
 }
