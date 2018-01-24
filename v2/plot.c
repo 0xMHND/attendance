@@ -9,6 +9,9 @@
  * output:	This function returns 0 on success
  * description:	This function takes x and y values and creates
  * 				a PNG image showing the graphical representation of that data
+ * 				
+ *
+ * 	TODO: Each month have a different color.
 ***************************/
 int plot_data(uint64_t * xvals, uint64_t ** yvals, int size, int yValCnt)
 {
