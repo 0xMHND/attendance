@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "func.h"
 
 #define WORK_DAY_SEC ( (8*60*60) + (30*60) ) //8 hr and 30 min
@@ -16,6 +17,7 @@ double avg_out(WEEK_t *w, uint16_t index){
             {
                 sum += w[i].days[j].homeIN - w[i].days[j].workOut;
                 days_cnt++;
+//                printf("week %d day %d, work-home %d\n", i, j, w[i].days[j].homeIN - w[i].days[j].workOut);
             }
         }
 
@@ -88,14 +90,14 @@ void readAttendance(WEEK_t *w, uint16_t* week_index) {
     uint8_t dayIndex = 0;
     char day = 'X';
     char buf[LINE_MAX];
-    char str[256];
+    char note[256];
     int temp[6] = {0};
 
     FILE* fp = fopen(FILE_ATTENDANCE, "r");
     if (fp == NULL)
-        exit(EXIT_FAILURE);
+       exit(EXIT_FAILURE);
 
-    memset(str, 0, sizeof(str)); 
+    memset(note, 0, sizeof(note)); 
     while (fgets(buf, sizeof(buf), fp) != NULL) {
         if(buf[1]=='E') //if first word is WEEK
         { 
@@ -109,18 +111,18 @@ void readAttendance(WEEK_t *w, uint16_t* week_index) {
 
         else{
             sscanf(buf, "%c %d:%d:%d %d:%d:%d NOTE:%s", &day,
-                                                &temp[0],
-                                                &temp[1],
-                                                &temp[2],
-                                                &temp[3],
-                                                &temp[4],
-                                                &temp[5],
-                                                str);
+                                                        &temp[0],
+                                                        &temp[1],
+                                                        &temp[2],
+                                                        &temp[3],
+                                                        &temp[4],
+                                                        &temp[5],
+                                                        note);
             dayIndex = return_day_number(day);
             if(dayIndex == -1)
                 printf("error reading day index");
 
-            memcpy(w[weekCnt-1].days[dayIndex].note, str, sizeof(str));
+            memcpy(w[weekCnt-1].days[dayIndex].note, note, sizeof(note));
             w[weekCnt-1].days[dayIndex].day = day;
             w[weekCnt-1].days[dayIndex].workIn = temp[2] + 60*temp[1] + 3600*temp[0];
             w[weekCnt-1].days[dayIndex].workOut = temp[5] + 60*temp[4] + 3600*temp[3];
@@ -130,7 +132,7 @@ void readAttendance(WEEK_t *w, uint16_t* week_index) {
             temp[3] = 0;
             temp[4] = 0;
             temp[5] = 0;
-            memset(str, 0, sizeof(str)); 
+            memset(note, 0, sizeof(note)); 
         }
  //       printf("%c %d %d\n", w[weekCnt-1].days[dayIndex].day,w[weekCnt-1].days[dayIndex].workIn, w[weekCnt-1].days[dayIndex].workOut);
     }
@@ -161,7 +163,6 @@ int return_day_number(char day){
             return -1;
     }
 }
-
 
 void printStats(WEEK_t *stats, uint16_t week_index){
     uint16_t days_cnt = 0;
@@ -231,13 +232,36 @@ void printStats(WEEK_t *stats, uint16_t week_index){
                 {
                     printf("      ");
                 }
-
+                
                 /********** TOTAL WORKED *********/
                 hr = (stats[i].days[j].workOut- stats[i].days[j].workIn)/ 3600;
                 min = ((stats[i].days[j].workOut- stats[i].days[j].workIn)% 3600)/60;
                 sec = ((stats[i].days[j].workOut - stats[i].days[j].workIn)% 3600) % 60;
-                printf("   worked %02d:%02d:%02d\n", hr, min, sec);
+                printf("   worked %02d:%02d:%02d", hr, min, sec);
+
+                if(strlen(stats[i].days[j].note) > 0)
+                {
+                    if(!strncmp("off", stats[i].days[j].note, 3))
+                    {
+                        //total_sec += WORK_DAY_SEC;
+                    }
+                    else if(!strncmp("half", stats[i].days[j].note, 4))
+                    {
+                        total_sec += WORK_DAY_SEC/2;
+                    }
+                    else if(!strncmp("tr", stats[i].days[j].note, 2))
+                    {
+                        //total_sec += WORK_DAY_SEC;
+                    }
+                }
                 total_sec += (stats[i].days[j].workOut - stats[i].days[j].workIn);
+
+
+                /********** NOTE *********/
+                //if(stats[i].days[j].note)
+                //    printf(" %s", stats[i].days[j].note);
+
+                printf("\n");
             }
         }
         total_sec = ONE_WEEK_TOTAL_SEC - total_sec;
