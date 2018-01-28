@@ -3,7 +3,8 @@
 #include <string.h>
 #include "func.h"
 
-#define WORK_DAY_SEC ( (8*60*60) + (30*60) ) //8 hr and 30 min
+#define OFFICIAL_WORK_DAY_SEC (8*60*60) //8 hr
+#define WORK_DAY_SEC ( OFFICIAL_WORK_DAY_SEC + (30*60) ) //8 hr and 30 min
 #define ONE_WEEK_TOTAL_SEC (5*WORK_DAY_SEC)
 
 double avg_out(WEEK_t *w, uint16_t index){
@@ -247,7 +248,7 @@ void printStats(WEEK_t *stats, uint16_t week_index){
                     }
                     else if(!strncmp("half", stats[i].days[j].note, 4))
                     {
-                        total_sec += WORK_DAY_SEC/2;
+                        total_sec += OFFICIAL_WORK_DAY_SEC/2 + (30*60);
                     }
                     else if(!strncmp("tr", stats[i].days[j].note, 2))
                     {
