@@ -254,6 +254,10 @@ void printStats(WEEK_t *stats, uint16_t week_index){
                     {
                         //total_sec += WORK_DAY_SEC;
                     }
+                    else if(!strncmp("@2", stats[i].days[j].note, 2))
+                    {
+                        total_sec += (60*60) + (30*60);
+                    }
                 }
                 total_sec += (stats[i].days[j].workOut - stats[i].days[j].workIn);
 
