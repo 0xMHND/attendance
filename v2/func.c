@@ -37,7 +37,7 @@ double avg_in(WEEK_t *w, uint16_t index){
             {
                 sum += w[i].days[j].workIn - w[i].days[j].homeOUT;
                 if(w[i].days[j].workIn < w[i].days[j].homeOUT)
-                printf("w[%d].day[%d]: in %d --- out %d\n", i, j, w[i].days[j].workIn, w[i].days[j].homeOUT);
+                    printf("\nAbnormal! w[%d].day[%d]: WorkIn %d --- HomeOut %d\n", i, j, w[i].days[j].workIn, w[i].days[j].homeOUT);
                 days_cnt++;
             }
         }
