@@ -16,7 +16,9 @@ int main(int argc, char** argv){
     uint16_t week_index = 0;
 
     //Get current time
-    time_t rawtime; time( &rawtime ); struct tm * timeinfo; timeinfo = localtime ( &rawtime );
+    time_t rawtime; time( &rawtime );
+    struct tm * timeinfo; 
+    timeinfo = localtime ( &rawtime );
     printf ("Today is %s", asctime(timeinfo));
     time_t time_now = timeinfo->tm_sec + timeinfo->tm_min*60 + timeinfo->tm_hour*3600;
 

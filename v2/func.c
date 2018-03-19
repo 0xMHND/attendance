@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "func.h"
+#include <time.h>
 
 #define OFFICIAL_WORK_DAY_SEC (8*60*60) //8 hr
 #define WORK_DAY_SEC ( OFFICIAL_WORK_DAY_SEC + (30*60) ) //8 hr and 30 min
@@ -176,6 +177,7 @@ void printStats(WEEK_t *stats, uint16_t week_index){
     for(int i=0; i<week_index; i++)
     {
         int32_t total_sec = 0;
+        int32_t last_day_sec = 0;
         int8_t rem_hr = 0;
         int8_t rem_min = 0;
         int8_t rem_sec = 0;
@@ -262,6 +264,7 @@ void printStats(WEEK_t *stats, uint16_t week_index){
                     }
                 }
                 total_sec += (stats[i].days[j].workOut - stats[i].days[j].workIn);
+                last_day_sec = (stats[i].days[j].workOut - stats[i].days[j].workIn);
 
 
                 /********** NOTE *********/
@@ -271,11 +274,22 @@ void printStats(WEEK_t *stats, uint16_t week_index){
                 printf("\n");
             }
         }
+        time_t rawtime; time( &rawtime );
+        struct tm * timeinfo;
+        timeinfo = localtime ( &rawtime );
+        time_t time_now = timeinfo->tm_sec + timeinfo->tm_min*60 + timeinfo->tm_hour*3600;
+        int32_t today_sec = time_now + (60*60*8 + 60*30) - last_day_sec;
+
         total_sec = ONE_WEEK_TOTAL_SEC - total_sec;
+        
         rem_hr = (total_sec)/ 3600;
         rem_min = ((total_sec)% 3600)/60;
         rem_sec = ((total_sec)% 3600) % 60;
         printf("--------- total left: %02d:%02d:%02d ---------\n", rem_hr, rem_min, rem_sec);
+        rem_hr = (today_sec)/ 3600;
+        rem_min = ((today_sec)% 3600)/60;
+        rem_sec = ((today_sec)% 3600) % 60;
+        printf(" Dismissed @ %02d:%02d:%02d\n", rem_hr, rem_min, rem_sec);
     }
     printf("(%d) weeks and %d worked days\n", week_index, days_cnt);
 }
