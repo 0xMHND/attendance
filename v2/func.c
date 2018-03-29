@@ -274,11 +274,6 @@ void printStats(WEEK_t *stats, uint16_t week_index){
                 printf("\n");
             }
         }
-        time_t rawtime; time( &rawtime );
-        struct tm * timeinfo;
-        timeinfo = localtime ( &rawtime );
-        time_t time_now = timeinfo->tm_sec + timeinfo->tm_min*60 + timeinfo->tm_hour*3600;
-        int32_t today_sec = time_now + (60*60*8 + 60*30) - last_day_sec;
 
         total_sec = ONE_WEEK_TOTAL_SEC - total_sec;
         
@@ -286,9 +281,18 @@ void printStats(WEEK_t *stats, uint16_t week_index){
         rem_min = ((total_sec)% 3600)/60;
         rem_sec = ((total_sec)% 3600) % 60;
         printf("--------- total left: %02d:%02d:%02d ---------\n", rem_hr, rem_min, rem_sec);
-        rem_hr = (today_sec)/ 3600;
-        rem_min = ((today_sec)% 3600)/60;
-        rem_sec = ((today_sec)% 3600) % 60;
+
+        time_t rawtime; time( &rawtime );
+        struct tm * timeinfo;
+        timeinfo = localtime ( &rawtime );
+        time_t time_now = timeinfo->tm_sec + timeinfo->tm_min*60 + timeinfo->tm_hour*3600;
+        // basically: time now - allegadly remaining work day
+        total_sec = (total_sec > (60*60*8 + 60*30))?(60*60*8 + 60*30):total_sec;
+        int32_t today_out_time = time_now + total_sec - last_day_sec;
+
+        rem_hr = (today_out_time)/ 3600;
+        rem_min = ((today_out_time)% 3600)/60;
+        rem_sec = ((today_out_time)% 3600) % 60;
         printf(" Dismissed @ %02d:%02d:%02d\n", rem_hr, rem_min, rem_sec);
     }
     printf("(%d) weeks and %d worked days\n", week_index, days_cnt);
